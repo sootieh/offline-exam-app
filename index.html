@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
+<title>考试宝 · 刷题</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="考试宝">
+<meta name="theme-color" content="#2f6bff">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ============ 题库列表 ============ -->
+  <section id="page-banks" class="page active">
+    <header class="nav">
+      <h1>题库</h1>
+      <button class="nav-btn" id="btn-goto-import">＋ 导入</button>
+    </header>
+    <div class="scroll">
+      <div id="install-tip" class="install-tip" hidden>
+        <div class="it-title">安装到 iPhone 主屏幕</div>
+        <div class="it-body">Safari 底部 <b>分享</b> 按钮 → 向下找到 <b>「添加到主屏幕」</b> → 添加。之后可离线打开，和原生 App 一样。</div>
+        <button class="it-close" id="it-close">知道了</button>
+      </div>
+      <div id="bank-list" class="bank-list"></div>
+      <div id="bank-empty" class="empty" hidden>
+        <div class="empty-ico">📚</div>
+        <p>还没有题库</p>
+        <button class="btn primary" id="btn-empty-import">导入第一个题库</button>
+      </div>
+      <div class="pad"></div>
+    </div>
+  </section>
+
+  <!-- ============ 题库详情（题目列表） ============ -->
+  <section id="page-bank" class="page">
+    <header class="nav">
+      <button class="nav-back" data-back>‹</button>
+      <h1 id="bank-title">题库</h1>
+      <button class="nav-btn" id="btn-bank-more">⋯</button>
+    </header>
+    <div class="scroll">
+      <div class="bank-hero">
+        <div class="bh-name" id="bh-name"></div>
+        <div class="bh-sub" id="bh-sub"></div>
+        <div class="bh-tags" id="bh-tags"></div>
+      </div>
+      <div class="quick-actions">
+        <button class="qa" data-act="all"><span class="qa-ico">📖</span>全部练习</button>
+        <button class="qa" data-act="wrong"><span class="qa-ico">❗</span>错题重做</button>
+        <button class="qa" data-act="new"><span class="qa-ico">✨</span>未做题目</button>
+        <button class="qa" data-act="recite"><span class="qa-ico">🧠</span>背题模式</button>
+      </div>
+      <div class="search-row">
+        <input id="q-search" class="input" placeholder="搜索题干关键词…">
+      </div>
+      <div id="qlist" class="qlist"></div>
+      <div class="pad"></div>
+    </div>
+  </section>
+
+  <!-- ============ 导入 ============ -->
+  <section id="page-import" class="page">
+    <header class="nav">
+      <button class="nav-back" data-back>‹</button>
+      <h1>导入题库</h1>
+      <button class="nav-btn" id="btn-tpl">模板</button>
+    </header>
+    <div class="scroll">
+      <div class="block">
+        <label class="fld">
+          <span>题库名称</span>
+          <input id="imp-name" class="input" placeholder="例如：执业药师·药事管理">
+        </label>
+      </div>
+
+      <div class="block">
+        <div class="blk-title">① 选择文件</div>
+        <div class="drop" id="imp-drop">
+          <div class="drop-ico">📄</div>
+          <div class="drop-t">点击选择 Excel / Word / CSV / TXT / JSON 文件</div>
+          <div class="drop-s">支持 .xlsx .xls .docx .csv .txt .json</div>
+        </div>
+        <input type="file" id="imp-file" accept=".xlsx,.xls,.xlsm,.ods,.docx,.csv,.txt,.json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/csv,text/plain,application/json" hidden>
+        <div id="imp-fname" class="fname" hidden></div>
+      </div>
+
+      <div id="imp-sheets" class="block" hidden>
+        <div class="blk-title">选择要导入的工作表</div>
+        <div id="imp-sheet-list" class="sheet-list"></div>
+        <div class="blk-title" style="margin-top:12px">导入方式</div>
+        <div id="imp-sheet-mode" class="chip-wrap">
+          <button class="chip on" data-v="merge">合并为一个题库</button>
+          <button class="chip" data-v="split">每个工作表单独建题库</button>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="blk-title">② 或者直接粘贴文本</div>
+        <textarea id="imp-text" class="area" rows="7" placeholder="粘贴题库内容，例如：
+
+1. 以下属于行政处罚的是
+A. 罚款
+B. 拘役
+C. 罚金
+D. 管制
+答案：A
+解析：罚款属于行政处罚，罚金属于刑罚。
+
+也支持 CSV / JSON 直接粘贴。"></textarea>
+        <div class="row-btns">
+          <button class="btn ghost" id="btn-parse">解析预览</button>
+          <button class="btn ghost" id="btn-clear-text">清空</button>
+        </div>
+      </div>
+
+      <div id="imp-preview" class="block" hidden>
+        <div class="blk-title">③ 预览（共 <b id="imp-count">0</b> 题）</div>
+        <div id="imp-stats" class="imp-stats"></div>
+        <div id="imp-warn" class="warn" hidden></div>
+        <div id="imp-samples" class="imp-samples"></div>
+        <button class="btn primary big" id="btn-do-import">确认导入</button>
+      </div>
+
+      <div class="block tip-block">
+        <div class="blk-title">📌 支持的格式说明</div>
+        <div class="tip">
+          <p><b>Excel / CSV</b>：首行为表头，需含「题目」列；可选「选项A~F」「答案」「解析」「题型」「章节」列。列名会自动模糊匹配（如 题干/question/title 都算题目）。含多个工作表时可勾选导入，支持合并或按工作表分别建题库。</p>
+          <p><b>Word（.docx）</b>：按段落识别，支持「1. 题目 / A. 选项 / 答案：A / 解析：…」的排版，也支持 Word 表格排版的题库。旧的 .doc 格式不支持，请在 Word 里另存为 .docx。</p>
+          <p><b>TXT 文本</b>：题号开头（1. / 1、/ 1)），下面 A. B. C. D. 选项，再下面「答案：A」「解析：…」。多题之间空行分隔。</p>
+          <p><b>JSON</b>：<code>[{"stem":"题干","options":["A..","B.."],"answer":["A"],"explanation":"解析","type":"single"}]</code>，或 <code>{"questions":[...]}</code>。</p>
+          <p><b>题型自动识别</b>：答案含 2 个以上字母 → 多选；答案为 对/错/正确/错误/√/× → 判断；无选项 → 填空；其余 → 单选。</p>
+        </div>
+      </div>
+      <div class="pad"></div>
+    </div>
+  </section>
+
+  <!-- ============ 练习 ============ -->
+  <section id="page-practice" class="page">
+    <header class="nav"><h1>练习</h1><span></span></header>
+    <div class="scroll">
+      <div id="prac-empty" class="empty" hidden>
+        <div class="empty-ico">📚</div><p>先导入题库再来练习</p>
+        <button class="btn primary" data-goto="page-import">去导入</button>
+      </div>
+      <div id="prac-body">
+        <div class="block">
+          <div class="blk-title">选择题库</div>
+          <div id="prac-banks" class="chip-wrap"></div>
+        </div>
+        <div class="block">
+          <div class="blk-title">练习范围</div>
+          <div id="prac-scope" class="chip-wrap">
+            <button class="chip on" data-v="all">全部</button>
+            <button class="chip" data-v="new">未做</button>
+            <button class="chip" data-v="wrong">错题</button>
+            <button class="chip" data-v="fav">收藏</button>
+            <button class="chip" data-v="unmastered">未掌握</button>
+          </div>
+        </div>
+        <div class="block">
+          <div class="blk-title">顺序</div>
+          <div id="prac-order" class="chip-wrap">
+            <button class="chip on" data-v="seq">顺序</button>
+            <button class="chip" data-v="rand">随机</button>
+          </div>
+        </div>
+        <div class="block">
+          <div class="blk-title">题量</div>
+          <div id="prac-limit" class="chip-wrap">
+            <button class="chip on" data-v="0">全部</button>
+            <button class="chip" data-v="20">20</button>
+            <button class="chip" data-v="50">50</button>
+            <button class="chip" data-v="100">100</button>
+          </div>
+        </div>
+        <div class="block">
+          <button class="btn primary big" id="btn-start-prac">开始练习</button>
+          <button class="btn ghost big" id="btn-start-recite" style="margin-top:10px">进入背题模式</button>
+        </div>
+      </div>
+      <div class="pad"></div>
+    </div>
+  </section>
+
+  <!-- ============ 考试 ============ -->
+  <section id="page-exam" class="page">
+    <header class="nav"><h1>模拟考试</h1><span></span></header>
+    <div class="scroll">
+      <div id="exam-empty" class="empty" hidden>
+        <div class="empty-ico">📝</div><p>先导入题库</p>
+        <button class="btn primary" data-goto="page-import">去导入</button>
+      </div>
+      <div id="exam-body">
+        <div class="block">
+          <div class="blk-title">选择题库</div>
+          <div id="exam-banks" class="chip-wrap"></div>
+        </div>
+        <div class="block">
+          <div class="blk-title">题型与题量</div>
+          <div id="exam-types" class="type-rows"></div>
+        </div>
+        <div class="block">
+          <div class="blk-title">考试时长</div>
+          <div id="exam-time" class="chip-wrap">
+            <button class="chip" data-v="0">不限制</button>
+            <button class="chip" data-v="30">30 分钟</button>
+            <button class="chip on" data-v="60">60 分钟</button>
+            <button class="chip" data-v="90">90 分钟</button>
+            <button class="chip" data-v="120">120 分钟</button>
+          </div>
+        </div>
+        <div class="block">
+          <div class="blk-title">抽题方式</div>
+          <div id="exam-src" class="chip-wrap">
+            <button class="chip on" data-v="all">全部</button>
+            <button class="chip" data-v="new">只抽未做</button>
+            <button class="chip" data-v="wrong">只抽错题</button>
+          </div>
+        </div>
+        <div class="block">
+          <button class="btn primary big" id="btn-start-exam">开始考试</button>
+        </div>
+        <div class="block" id="exam-hist-block">
+          <div class="blk-title">考试记录</div>
+          <div id="exam-hist" class="hist"></div>
+        </div>
+      </div>
+      <div class="pad"></div>
+    </div>
+  </section>
+
+  <!-- ============ 统计 ============ -->
+  <section id="page-stats" class="page">
+    <header class="nav"><h1>统计</h1><button class="nav-btn" id="btn-settings">⚙</button></header>
+    <div class="scroll">
+      <div class="stat-cards" id="stat-cards"></div>
+      <div class="block">
+        <div class="blk-title">近 14 天练习量</div>
+        <div id="stat-chart" class="chart"></div>
+      </div>
+      <div class="block">
+        <div class="blk-title">题型掌握情况</div>
+        <div id="stat-types" class="type-stats"></div>
+      </div>
+      <div class="block">
+        <div class="blk-title">各题库进度</div>
+        <div id="stat-banks" class="bank-progress"></div>
+      </div>
+      <div class="pad"></div>
+    </div>
+  </section>
+
+  <!-- ============ 设置 ============ -->
+  <section id="page-settings" class="page">
+    <header class="nav">
+      <button class="nav-back" data-back>‹</button>
+      <h1>设置与数据</h1><span></span>
+    </header>
+    <div class="scroll">
+      <div class="block">
+        <div class="blk-title">数据备份</div>
+        <button class="btn ghost big" id="btn-export">导出全部数据（JSON）</button>
+        <button class="btn ghost big" id="btn-import-bak" style="margin-top:10px">从备份恢复</button>
+        <input type="file" id="bak-file" accept=".json,application/json" hidden>
+        <p class="hint">导出文件包含所有题库、题目、答题记录与收藏。换手机时用它迁移。</p>
+      </div>
+      <div class="block">
+        <div class="blk-title">危险操作</div>
+        <button class="btn danger big" id="btn-clear-records">清空所有答题记录（保留题库）</button>
+        <button class="btn danger big" id="btn-wipe" style="margin-top:10px">删除全部数据</button>
+      </div>
+      <div class="block tip-block">
+        <div class="blk-title">关于</div>
+        <div class="tip">
+          <p>纯本地运行，所有数据存在你的手机浏览器里，不上传任何服务器。</p>
+          <p>版本号 1.0 · 离线可用</p>
+        </div>
+      </div>
+      <div class="pad"></div>
+    </div>
+  </section>
+
+  <!-- ============ 答题器（全屏） ============ -->
+  <section id="page-quiz" class="page quiz">
+    <header class="qz-top">
+      <button class="qz-btn" id="qz-back">退出</button>
+      <div class="qz-prog"><div class="qz-bar"><i id="qz-bar"></i></div><span id="qz-pos">0/0</span></div>
+      <button class="qz-btn" id="qz-card">题卡</button>
+    </header>
+    <div class="qz-body" id="qz-body">
+      <div class="qz-meta">
+        <span class="qz-type" id="qz-type">单选题</span>
+        <span class="qz-timer" id="qz-timer" hidden></span>
+      </div>
+      <div class="qz-stem" id="qz-stem"></div>
+      <div class="qz-opts" id="qz-opts"></div>
+      <div class="qz-fill" id="qz-fillwrap" hidden>
+        <input class="input" id="qz-fill" placeholder="请输入答案" autocomplete="off">
+      </div>
+      <div class="qz-answer" id="qz-answer" hidden></div>
+      <div class="qz-exp" id="qz-exp" hidden></div>
+    </div>
+    <footer class="qz-bottom">
+      <button class="qz-act" id="qz-prev">上一题</button>
+      <button class="qz-act fav" id="qz-fav">☆ 收藏</button>
+      <button class="qz-act primary" id="qz-main">确认作答</button>
+      <button class="qz-act" id="qz-next">下一题</button>
+    </footer>
+  </section>
+
+  <!-- ============ 考试结果 ============ -->
+  <section id="page-result" class="page">
+    <header class="nav">
+      <button class="nav-back" data-back>‹</button>
+      <h1>考试结果</h1><span></span>
+    </header>
+    <div class="scroll">
+      <div class="result-hero">
+        <div class="rs-score" id="rs-score">0</div>
+        <div class="rs-sub" id="rs-sub"></div>
+        <div class="rs-ring" id="rs-ring"></div>
+      </div>
+      <div class="block">
+        <div class="blk-title">逐题回顾</div>
+        <div id="rs-list" class="rs-list"></div>
+      </div>
+      <div class="pad"></div>
+    </div>
+  </section>
+
+  <!-- 题卡浮层 -->
+  <div class="mask" id="card-mask" hidden>
+    <div class="sheet">
+      <div class="sh-head">题卡 <span class="sh-hint" id="sh-hint"></span><button class="sh-close" id="sh-close">关闭</button></div>
+      <div class="sh-grid" id="sh-grid"></div>
+      <div class="sh-legend">
+        <span><i class="lg done"></i>已答</span>
+        <span><i class="lg right"></i>正确</span>
+        <span><i class="lg wrong"></i>错误</span>
+        <span><i class="lg cur"></i>当前</span>
+        <span><i class="lg none"></i>未答</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 编辑题目浮层 -->
+  <div class="mask" id="edit-mask" hidden>
+    <div class="sheet">
+      <div class="sh-head">编辑题目 <button class="sh-close" id="edit-close">关闭</button></div>
+      <div class="sh-form">
+        <label class="fld"><span>题型</span>
+          <select id="ed-type" class="input">
+            <option value="single">单选题</option>
+            <option value="multiple">多选题</option>
+            <option value="judge">判断题</option>
+            <option value="fill">填空题</option>
+          </select>
+        </label>
+        <label class="fld"><span>题干</span><textarea id="ed-stem" class="area" rows="3"></textarea></label>
+        <label class="fld"><span>选项（每行一个，格式 A.内容）</span><textarea id="ed-opts" class="area" rows="4"></textarea></label>
+        <label class="fld"><span>答案（多选用逗号分隔，填空多个答案用 | 分隔）</span><input id="ed-answer" class="input"></label>
+        <label class="fld"><span>解析</span><textarea id="ed-exp" class="area" rows="3"></textarea></label>
+        <div class="row-btns">
+          <button class="btn primary" id="ed-save">保存</button>
+          <button class="btn danger" id="ed-del">删除本题</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 底部导航 -->
+  <nav class="tabbar" id="tabbar">
+    <button class="tab active" data-tab="page-banks"><span>📚</span>题库</button>
+    <button class="tab" data-tab="page-practice"><span>✏️</span>练习</button>
+    <button class="tab" data-tab="page-exam"><span>📝</span>考试</button>
+    <button class="tab" data-tab="page-stats"><span>📊</span>统计</button>
+  </nav>
+
+  <div class="toast" id="toast" hidden></div>
+</div>
+
+<script src="vendor/xlsx.full.min.js"></script>
+<script src="vendor/fflate.min.js"></script>
+<script src="js/store.js"></script>
+<script src="js/parser.js"></script>
+<script src="js/quiz.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
