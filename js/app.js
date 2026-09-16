@@ -47,6 +47,7 @@
       t.classList.toggle('active', t.getAttribute('data-tab') === id);
     });
     if (pg && pg.querySelector('.scroll')) pg.querySelector('.scroll').scrollTop = 0;
+    var nv = pg && pg.querySelector('.nav'); if (nv) nv.classList.remove('mini');
     if (id === 'page-banks') renderBanks();
     if (id === 'page-practice') renderPractice();
     if (id === 'page-exam') renderExam();
@@ -715,9 +716,21 @@
     setTimeout(function () { document.body.removeChild(a); URL.revokeObjectURL(url); }, 300);
   }
 
+  /* iOS 大标题：滚动时收起为导航栏小标题 */
+  function bindLargeTitles() {
+    document.querySelectorAll('.page').forEach(function (p) {
+      var sc = p.querySelector('.scroll'), nv = p.querySelector('.nav');
+      if (!sc || !nv || !nv.querySelector('.nav-t')) return;
+      sc.addEventListener('scroll', function () {
+        nv.classList.toggle('mini', sc.scrollTop > 26);
+      }, { passive: true });
+    });
+  }
+
   /* ================= 初始化 ================= */
   function init() {
     Quiz.bind();
+    bindLargeTitles();
 
     // 底部导航
     document.querySelectorAll('.tab').forEach(function (t) {
