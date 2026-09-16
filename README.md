@@ -2,7 +2,8 @@
 
 一个可以**装到 iPhone 主屏幕**上用的离线刷题 App。导入自己的题库，随时随地进行顺序/随机练习、背题、限时模拟考试，自动收拾错题本。
 
-- 在线体验：https://exam-quiz-app-25951.app.workbuddy.host/
+- **GitHub Pages（官方托管）**：https://sootieh.github.io/offline-exam-app/
+- 备用镜像：https://exam-quiz-app-25951.app.workbuddy.host/
 - 无需 Xcode、无需 Apple 开发者账号；**数据全部存在手机本地，不上传任何服务器**
 
 ---
