@@ -8,8 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="考试宝">
-<meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f6f5f1">
 <meta name="format-detection" content="telephone=no">
 <meta name="color-scheme" content="light dark">
 <link rel="manifest" href="manifest.webmanifest">
@@ -278,6 +277,11 @@ D. 管制
     </header>
     <div class="scroll">
       <div class="block">
+        <div class="blk-title">界面风格</div>
+        <div class="theme-row" id="theme-row"></div>
+        <p class="hint">跟随系统深色模式；所选风格即时生效并自动记住。</p>
+      </div>
+      <div class="block">
         <div class="blk-title">数据备份</div>
         <button class="btn ghost big" id="btn-export">导出全部数据（JSON）</button>
         <button class="btn ghost big" id="btn-import-bak" style="margin-top:10px">从备份恢复</button>
@@ -293,7 +297,7 @@ D. 管制
         <div class="blk-title">关于</div>
         <div class="tip">
           <p>纯本地运行，所有数据存在你的手机浏览器里，不上传任何服务器。</p>
-          <p>版本号 1.0.1 · 离线可用 · 支持深色模式</p>
+          <p>版本号 1.0.2 · 离线可用 · 支持深色模式</p>
         </div>
       </div>
       <div class="pad"></div>
@@ -346,6 +350,16 @@ D. 管制
       <div class="pad"></div>
     </div>
   </section>
+
+  <!-- 动作面板（题库管理） -->
+  <div class="mask" id="menu-mask" hidden>
+    <div class="sheet menu-sheet">
+      <div class="sheet-grabber"></div>
+      <div class="menu-title" id="menu-title"></div>
+      <div id="menu-items"></div>
+      <button class="menu-cancel" id="menu-cancel">取消</button>
+    </div>
+  </div>
 
   <!-- 题卡浮层 -->
   <div class="mask" id="card-mask" hidden>

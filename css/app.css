@@ -1,38 +1,29 @@
 /* ============================================================
-   考试宝 PWA · iOS 26/27 Liquid Glass 设计系统  v1.0.1
+   考试宝 PWA · iOS 26/27 Liquid Glass 设计系统  v1.0.2
+   低饱和度配色 · 可切换界面风格
    ============================================================ */
 :root{
   color-scheme:light dark;
 
-  /* 语义色（浅色 = iOS System Colors） */
-  --bg:#f2f2f7;
-  --card:rgba(255,255,255,.72);
-  --card-2:rgba(255,255,255,.86);
+  /* 中性色（浅色：暖调米白底，参考低饱和现代风） */
+  --bg:#f6f5f1;
+  --card:rgba(255,255,255,.78);
+  --card-2:rgba(255,255,255,.9);
   --card-solid:#ffffff;
-  --sep:rgba(60,60,67,.16);
-  --sep-hard:rgba(60,60,67,.29);
-  --txt:#000000;
-  --txt2:rgba(60,60,67,.62);
-  --txt3:rgba(60,60,67,.32);
-  --fill:rgba(118,118,128,.12);
-  --fill-2:rgba(118,118,128,.2);
+  --sep:rgba(70,68,60,.14);
+  --sep-hard:rgba(70,68,60,.28);
+  --txt:#1c1b18;
+  --txt2:rgba(60,58,50,.64);
+  --txt3:rgba(60,58,50,.36);
+  --fill:rgba(120,118,108,.11);
+  --fill-2:rgba(120,118,108,.19);
 
-  /* 品牌与功能色 */
-  --brand:#007aff;
-  --brand-2:#4da3ff;
-  --brand-d:#0060df;
-  --brand-l:rgba(0,122,255,.12);
-  --brand-t:rgba(0,122,255,.30);
-  --green:#34c759;
-  --green-l:rgba(52,199,89,.15);
-  --red:#ff3b30;
-  --red-l:rgba(255,59,48,.13);
-  --orange:#ff9500;
-  --orange-l:rgba(255,149,0,.16);
-  --purple:#af52de;
-  --purple-l:rgba(175,82,222,.14);
-  --cyan:#32ade6;
-  --cyan-l:rgba(50,173,230,.14);
+  /* 功能色（全局低饱和） */
+  --green:#3e7d5c;  --green-l:rgba(62,125,92,.13);
+  --red:#c25b52;    --red-l:rgba(194,91,82,.12);
+  --orange:#b3823f; --orange-l:rgba(179,130,63,.14);
+  --purple:#7d6b99; --purple-l:rgba(125,107,153,.13);
+  --cyan:#52889e;   --cyan-l:rgba(82,136,158,.13);
 
   /* 玻璃材质 */
   --blur:saturate(180%) blur(22px);
@@ -48,34 +39,83 @@
   --r-l:22px;
   --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","PingFang SC","Helvetica Neue","Microsoft YaHei",sans-serif;
 }
+
+/* ---------------- 界面风格（低饱和主题） ----------------
+   默认 = 墨绿；html[data-theme] 切换，localStorage 持久化 */
+:root,
+[data-theme="moss"]{
+  --brand:#2e6d5c;  --brand-2:#4e8a78;  --brand-d:#245648;
+  --brand-l:rgba(46,109,92,.11);  --brand-t:rgba(46,109,92,.28);
+}
+[data-theme="mist"]{
+  --brand:#4c7196;  --brand-2:#7192b3;  --brand-d:#3b5c7d;
+  --brand-l:rgba(76,113,150,.11); --brand-t:rgba(76,113,150,.28);
+}
+[data-theme="clay"]{
+  --brand:#a56a48;  --brand-2:#bd8a68;  --brand-d:#8a563a;
+  --brand-l:rgba(165,106,72,.11); --brand-t:rgba(165,106,72,.28);
+}
+[data-theme="graphite"]{
+  --brand:#55565e;  --brand-2:#7b7c85;  --brand-d:#43444b;
+  --brand-l:rgba(85,86,94,.1);    --brand-t:rgba(85,86,94,.28);
+}
+[data-theme="wisteria"]{
+  --brand:#756b99;  --brand-2:#968db8;  --brand-d:#5f567f;
+  --brand-l:rgba(117,107,153,.11);--brand-t:rgba(117,107,153,.28);
+}
+/* 浅色下各主题给背景一点同色调微染 */
+[data-theme="mist"]{--bg:#f4f5f7}
+[data-theme="clay"]{--bg:#f8f4ef}
+[data-theme="graphite"]{--bg:#f5f5f4}
+[data-theme="wisteria"]{--bg:#f6f4f8}
+
 @media (prefers-color-scheme:dark){
   :root{
-    --bg:#000000;
-    --card:rgba(28,28,30,.72);
-    --card-2:rgba(44,44,46,.8);
-    --card-solid:#1c1c1e;
-    --sep:rgba(84,84,88,.55);
-    --sep-hard:rgba(84,84,88,.75);
-    --txt:#ffffff;
-    --txt2:rgba(235,235,245,.6);
-    --txt3:rgba(235,235,245,.32);
-    --fill:rgba(118,118,128,.24);
-    --fill-2:rgba(118,118,128,.36);
-    --brand:#0a84ff;
-    --brand-2:#5babff;
-    --brand-d:#409cff;
-    --brand-l:rgba(10,132,255,.18);
-    --brand-t:rgba(10,132,255,.42);
-    --green:#30d158;  --green-l:rgba(48,209,88,.2);
-    --red:#ff453a;    --red-l:rgba(255,69,58,.2);
-    --orange:#ff9f0a; --orange-l:rgba(255,159,10,.2);
-    --purple:#bf5af2; --purple-l:rgba(191,90,242,.2);
-    --cyan:#64d2ff;   --cyan-l:rgba(100,210,255,.2);
+    --bg:#111210;
+    --card:rgba(38,39,36,.72);
+    --card-2:rgba(50,51,47,.82);
+    --card-solid:#212220;
+    --sep:rgba(235,233,225,.14);
+    --sep-hard:rgba(235,233,225,.24);
+    --txt:#f3f2ee;
+    --txt2:rgba(240,239,232,.6);
+    --txt3:rgba(240,239,232,.34);
+    --fill:rgba(235,233,225,.1);
+    --fill-2:rgba(235,233,225,.17);
+    --green:#6fb08d;  --green-l:rgba(111,176,141,.18);
+    --red:#d98a82;    --red-l:rgba(217,138,130,.17);
+    --orange:#d2a86b; --orange-l:rgba(210,168,107,.17);
+    --purple:#a89bc6; --purple-l:rgba(168,155,198,.17);
+    --cyan:#84b4c9;   --cyan-l:rgba(132,180,201,.17);
     --sh:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.34);
     --sh-lg:0 2px 6px rgba(0,0,0,.36), 0 18px 44px rgba(0,0,0,.5);
     --spec:inset 0 .5px 0 rgba(255,255,255,.14);
     --spec-s:inset 0 .5px 0 rgba(255,255,255,.1);
   }
+  :root,[data-theme="moss"]{
+    --brand:#5fa38e;  --brand-2:#82bca9;  --brand-d:#79b5a1;
+    --brand-l:rgba(95,163,142,.16); --brand-t:rgba(95,163,142,.38);
+  }
+  [data-theme="mist"]{
+    --brand:#7899bb;  --brand-2:#9bb7d3;  --brand-d:#8dabc9;
+    --brand-l:rgba(120,153,187,.17);--brand-t:rgba(120,153,187,.38);
+  }
+  [data-theme="clay"]{
+    --brand:#c4885f;  --brand-2:#d6a583;  --brand-d:#cd9771;
+    --brand-l:rgba(196,136,95,.17); --brand-t:rgba(196,136,95,.38);
+  }
+  [data-theme="graphite"]{
+    --brand:#9a9ba3;  --brand-2:#b8b9c0;  --brand-d:#a8a9b1;
+    --brand-l:rgba(154,155,163,.17);--brand-t:rgba(154,155,163,.38);
+  }
+  [data-theme="wisteria"]{
+    --brand:#a29ac7;  --brand-2:#bcb6d9;  --brand-d:#b0a9d0;
+    --brand-l:rgba(162,154,199,.17);--brand-t:rgba(162,154,199,.38);
+  }
+  [data-theme="mist"]{--bg:#101214}
+  [data-theme="clay"]{--bg:#121010}
+  [data-theme="graphite"]{--bg:#111112}
+  [data-theme="wisteria"]{--bg:#111014}
 }
 /* 降低透明度偏好 → 退回实心 */
 @media (prefers-reduced-transparency:reduce){
@@ -426,7 +466,7 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
   font-size:10.5px;color:var(--txt3);border-radius:20px;transition:transform .14s cubic-bezier(.2,.8,.3,1),color .18s}
 .tab:active{transform:scale(.9)}
 .tab .ico{width:25px;height:25px;stroke-width:1.7}
-.tab.active{color:var(--brand)}
+.tab.active{color:var(--brand-d);background:var(--brand-l)}
 .tab.active .ico{stroke-width:2.05}
 .page:not(.quiz).active .scroll{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
 
@@ -440,3 +480,42 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
 @media (min-width:640px){
   #app{max-width:520px;margin:0 auto;box-shadow:0 0 60px rgba(0,0,0,.1);position:relative;height:100%}
 }
+
+/* ---------------- 题库卡片：管理按钮 ---------------- */
+.bank-card{position:relative}
+.bc-more{position:absolute;top:8px;right:8px;width:32px;height:32px;border-radius:16px;
+  display:flex;align-items:center;justify-content:center;color:var(--txt3);z-index:2}
+.bc-more .ico{width:20px;height:20px}
+.bc-more:active{background:var(--fill)}
+.bank-card:active .bc-more{opacity:.9}
+
+/* ---------------- 动作面板（iOS Action Sheet） ---------------- */
+.menu-sheet{padding:8px 10px calc(env(safe-area-inset-bottom) + 12px)}
+.menu-title{font-size:13px;color:var(--txt2);text-align:center;padding:10px 12px 12px;
+  border-bottom:var(--hair);margin-bottom:6px;word-break:break-all}
+.menu-item{display:flex;align-items:center;gap:12px;width:100%;padding:14px 14px;border-radius:14px;
+  font-size:17px;color:var(--txt);text-align:left}
+.menu-item .ico{width:22px;height:22px;flex:0 0 auto;color:var(--txt2)}
+.menu-item:active{background:var(--fill)}
+.menu-item.danger{color:var(--red)}
+.menu-item.danger .ico{color:var(--red)}
+.menu-cancel{margin-top:8px;width:100%;padding:14px;border-radius:14px;background:var(--card-solid);
+  font-size:17px;font-weight:600;color:var(--brand);box-shadow:var(--sh)}
+.menu-cancel:active{opacity:.75}
+
+/* ---------------- 界面风格选择器 ---------------- */
+.theme-row{display:flex;gap:14px;justify-content:space-between;padding:4px 2px 2px}
+.theme-opt{flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;padding:2px 0}
+.theme-sw{width:44px;height:44px;border-radius:22px;position:relative;overflow:hidden;
+  box-shadow:var(--sh);transition:transform .15s cubic-bezier(.2,.8,.3,1);
+  border:2.5px solid transparent}
+.theme-opt:active .theme-sw{transform:scale(.88)}
+.theme-sw i{position:absolute;left:0;right:0;top:0;height:55%;display:block}
+.theme-sw b{position:absolute;left:0;right:0;bottom:0;top:55%;display:block}
+.theme-opt .theme-sw.on{border-color:var(--brand-d)}
+.theme-sw.on::after{content:"";position:absolute;right:3px;bottom:3px;width:14px;height:14px;
+  border-radius:8px;background:var(--brand-d);
+  background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.6 4.6L19 7.5"/></svg>');
+  background-size:10px;background-position:center;background-repeat:no-repeat}
+.theme-name{font-size:11.5px;color:var(--txt2)}
+.theme-opt.on .theme-name{color:var(--brand-d);font-weight:600}

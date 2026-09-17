@@ -12,6 +12,83 @@
     return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
   }
 
+  /* ================= 动作面板（iOS Action Sheet） ================= */
+  var ICONS = {
+    rename: '<path d="M12 4.5H6.8A2.3 2.3 0 0 0 4.5 6.8v10.4a2.3 2.3 0 0 0 2.3 2.3h10.4a2.3 2.3 0 0 0 2.3-2.3V12"/><path d="M10.6 13.4 19.2 4.8a1.7 1.7 0 0 0-2.4-2.4l-8.6 8.6-.9 3.3z"/>',
+    trash: '<path d="M4.5 6.5h15"/><path d="M9 6.5V4.8A1.3 1.3 0 0 1 10.3 3.5h3.4A1.3 1.3 0 0 1 15 4.8v1.7"/><path d="M6.2 6.5l.8 12.2a1.8 1.8 0 0 0 1.8 1.7h6.4a1.8 1.8 0 0 0 1.8-1.7l.8-12.2"/><path d="M10 10.5v6M14 10.5v6"/>',
+    share: '<path d="M12 14.5V4.2"/><path d="M8.2 7.6 12 3.8l3.8 3.8"/><path d="M6.5 11H5.8A1.8 1.8 0 0 0 4 12.8v5.4A1.8 1.8 0 0 0 5.8 20h12.4a1.8 1.8 0 0 0 1.8-1.8v-5.4A1.8 1.8 0 0 0 18.2 11h-.7"/>'
+  };
+  function showActionSheet(title, items, onPick) {
+    $('menu-title').textContent = title || '';
+    $('menu-items').innerHTML = items.map(function (it, i) {
+      return '<button class="menu-item' + (it.danger ? ' danger' : '') + '" data-i="' + i + '">' +
+        '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">' + (ICONS[it.icon] || '') + '</svg>' +
+        esc(it.label) + '</button>';
+    }).join('');
+    $('menu-mask').hidden = false;
+    Array.prototype.forEach.call($('menu-items').children, function (btn) {
+      btn.onclick = function () {
+        hideActionSheet();
+        var it = items[+btn.getAttribute('data-i')];
+        if (it && onPick) onPick(it.act);
+      };
+    });
+  }
+  function hideActionSheet() { $('menu-mask').hidden = true; }
+
+  /* ================= 界面风格 ================= */
+  var THEMES = [
+    { key: 'moss',      name: '墨绿', brand: '#2e6d5c', bg: '#f6f5f1', darkBrand: '#5fa38e', darkBg: '#111210' },
+    { key: 'mist',      name: '雾蓝', brand: '#4c7196', bg: '#f4f5f7', darkBrand: '#7899bb', darkBg: '#101214' },
+    { key: 'clay',      name: '陶土', brand: '#a56a48', bg: '#f8f4ef', darkBrand: '#c4885f', darkBg: '#121010' },
+    { key: 'graphite',  name: '石墨', brand: '#55565e', bg: '#f5f5f4', darkBrand: '#9a9ba3', darkBg: '#111112' },
+    { key: 'wisteria',  name: '黛紫', brand: '#756b99', bg: '#f6f4f8', darkBrand: '#a29ac7', darkBg: '#111014' }
+  ];
+  function currentTheme() {
+    var t = document.documentElement.getAttribute('data-theme');
+    return THEMES.filter(function (x) { return x.key === t; })[0] || THEMES[0];
+  }
+  function applyTheme(key, save) {
+    var t = THEMES.filter(function (x) { return x.key === key; })[0] || THEMES[0];
+    if (t.key === THEMES[0].key) document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', t.key);
+    if (save) { try { localStorage.setItem('examapp-theme', t.key); } catch (e) {} }
+    updateThemeColorMeta();
+    markThemeRow();
+  }
+  function updateThemeColorMeta() {
+    var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var t = currentTheme();
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', dark ? t.darkBg : t.bg);
+  }
+  function markThemeRow() {
+    var row = $('theme-row');
+    if (!row) return;
+    var cur = currentTheme().key;
+    Array.prototype.forEach.call(row.children, function (c) {
+      var on = c.getAttribute('data-theme') === cur;
+      c.classList.toggle('on', on);
+      c.querySelector('.theme-sw').classList.toggle('on', on);
+    });
+  }
+  function renderThemeRow() {
+    var row = $('theme-row');
+    if (!row) return;
+    row.innerHTML = THEMES.map(function (t) {
+      return '<button class="theme-opt" data-theme="' + t.key + '" aria-label="' + t.name + '">' +
+        '<span class="theme-sw"><i style="background:' + t.brand + '"></i><b style="background:' + t.bg + '"></b></span>' +
+        '<span class="theme-name">' + t.name + '</span></button>';
+    }).join('');
+    Array.prototype.forEach.call(row.children, function (c) {
+      c.onclick = function () {
+        applyTheme(c.getAttribute('data-theme'), true);
+        App.toast('已切换风格');
+      };
+    });
+    markThemeRow();
+  }
+
   var App = {
     banks: [],
     records: {},          // bankId -> {qid: rec}
@@ -148,6 +225,8 @@
       var pct = total ? Math.round(done / total * 100) : 0;
       return '<div class="bank-card" data-id="' + b.id + '">' +
         '<div class="bc-bar"></div>' +
+        '<button class="bc-more" data-more="' + b.id + '" aria-label="管理题库">' +
+        '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg></button>' +
         '<div class="bc-name">' + esc(b.name) + '</div>' +
         '<div class="bc-sub">共 ' + total + ' 题 · 已练 ' + done + ' 题（' + pct + '%）</div>' +
         '<div class="bc-prog"><i style="width:' + pct + '%"></i></div>' +
@@ -159,6 +238,44 @@
     }).join('');
     Array.prototype.forEach.call(wrap.children, function (c) {
       c.onclick = function () { openBank(c.getAttribute('data-id')); };
+    });
+    Array.prototype.forEach.call(wrap.querySelectorAll('.bc-more'), function (btn) {
+      btn.onclick = function (e) {
+        e.stopPropagation();
+        bankMenu(btn.getAttribute('data-more'));
+      };
+    });
+  }
+
+  /* 题库管理：重命名 / 删除 */
+  function bankMenu(id) {
+    var b = App.banks.filter(function (x) { return x.id === id; })[0];
+    if (!b) return;
+    showActionSheet(b.name, [
+      { label: '重命名', icon: 'rename', act: 'rename' },
+      { label: '删除题库', icon: 'trash', danger: true, act: 'delete' }
+    ], function (act) {
+      if (act === 'rename') {
+        var name = prompt('新的题库名称：', b.name);
+        if (name == null || !name.trim() || name.trim() === b.name) return;
+        DB.renameBank(b.id, name.trim()).then(refresh).then(function () {
+          if (App.curBank === b.id) {
+            $('bank-title').textContent = name.trim();
+            $('bh-name').textContent = name.trim();
+          }
+          App.toast('已重命名');
+        });
+      } else if (act === 'delete') {
+        if (!confirm('确定删除题库「' + b.name + '」？\n\n其中的 ' + (App.counts[b.id] || 0) + ' 道题目和答题记录将一并删除，此操作不可恢复。')) return;
+        DB.deleteBank(b.id).then(refresh).then(function () {
+          if (App.curBank === b.id) {
+            App.curBank = null;
+            if ($('page-bank').classList.contains('active')) App.go('page-banks');
+          }
+          App.sel.pracBank = null; App.sel.examBank = null;
+          App.toast('已删除题库');
+        });
+      }
     });
   }
 
@@ -732,6 +849,24 @@
     Quiz.bind();
     bindLargeTitles();
 
+    // 界面风格：恢复上次选择 + 渲染选择器
+    try {
+      var saved = localStorage.getItem('examapp-theme');
+      if (saved) applyTheme(saved, false);
+      else updateThemeColorMeta();
+    } catch (e) { updateThemeColorMeta(); }
+    renderThemeRow();
+    if (window.matchMedia) {
+      var mq = window.matchMedia('(prefers-color-scheme: dark)');
+      var onScheme = function () { updateThemeColorMeta(); };
+      if (mq.addEventListener) mq.addEventListener('change', onScheme);
+      else if (mq.addListener) mq.addListener(onScheme);
+    }
+
+    // 动作面板关闭
+    $('menu-cancel').onclick = hideActionSheet;
+    $('menu-mask').onclick = function (e) { if (e.target === $('menu-mask')) hideActionSheet(); };
+
     // 底部导航
     document.querySelectorAll('.tab').forEach(function (t) {
       t.onclick = function () { App.go(t.getAttribute('data-tab')); };
@@ -750,20 +885,7 @@
     // 题库详情
     $('q-search').oninput = renderQlist;
     $('btn-bank-more').onclick = function () {
-      var b = App.banks.filter(function (x) { return x.id === App.curBank; })[0];
-      if (!b) return;
-      var act = prompt('输入新名称可重命名该题题库；输入「删除」则删除整个题库。\n\n当前名称：' + b.name, b.name);
-      if (act == null) return;
-      if (act === '删除') {
-        if (!confirm('确定删除题库「' + b.name + '」及其所有题目？此操作不可恢复。')) return;
-        DB.deleteBank(b.id).then(refresh).then(function () { App.go('page-banks'); App.toast('已删除'); });
-      } else if (act.trim()) {
-        DB.renameBank(b.id, act.trim()).then(refresh).then(function () {
-          $('bank-title').textContent = act.trim();
-          $('bh-name').textContent = act.trim();
-          App.toast('已重命名');
-        });
-      }
+      if (App.curBank) bankMenu(App.curBank);
     };
     document.querySelectorAll('.qa').forEach(function (b) {
       b.onclick = function () {
