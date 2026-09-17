@@ -140,8 +140,10 @@ input,textarea,select{font-family:inherit;font-size:16px;color:inherit}
 .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px}
 
 /* ---------------- 导航栏（玻璃 + 大标题） ---------------- */
-.nav{display:flex;align-items:center;gap:6px;min-height:46px;padding:calc(max(env(safe-area-inset-top), 44px) + 8px) 8px 8px;
+.nav{display:flex;align-items:center;gap:6px;min-height:44px;padding:calc(env(safe-area-inset-top) + 2px) 8px 6px;
   background:transparent;position:relative;flex:0 0 auto;z-index:5}
+/* env() 失效的设备（部分 standalone 场景返回 0）：用较小兜底，够避开状态栏玻璃带即可 */
+:root.no-inset .nav{padding-top:26px}
 .nav::before{content:"";position:absolute;inset:0;background:var(--bg);
   backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
   border-bottom:var(--hair);opacity:0;transition:opacity .22s;z-index:-1}
@@ -156,7 +158,7 @@ input,textarea,select{font-family:inherit;font-size:16px;color:inherit}
 .nav-btn .ico{width:19px;height:19px;stroke-width:2}
 .nav-btn:active{opacity:.45}
 /* 大标题 */
-.lg-title{font-size:34px;font-weight:700;letter-spacing:-.6px;line-height:1.2;margin:6px 0 14px;padding:0 4px}
+.lg-title{font-size:34px;font-weight:700;letter-spacing:-.6px;line-height:1.2;margin:2px 0 14px;padding:0 4px}
 .lg-sub{font-size:13px;color:var(--txt2);margin:-8px 0 16px;padding:0 4px;font-weight:400;letter-spacing:0}
 
 /* ---------------- 通用块 ---------------- */
@@ -316,8 +318,9 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
 
 /* ---------------- 答题器 ---------------- */
 .quiz{background:var(--bg);z-index:20}
-.qz-top{position:relative;z-index:0;display:flex;align-items:center;gap:10px;padding:calc(max(env(safe-area-inset-top), 44px) + 8px) 12px 8px;
+.qz-top{position:relative;z-index:0;display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top) + 2px) 12px 8px;
   border-bottom:var(--hair);flex:0 0 auto;background:var(--bg)}
+:root.no-inset .qz-top{padding-top:26px}
 .qz-top::before{content:"";position:absolute;inset:0;backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);z-index:-1}
 .qz-btn{font-size:15px;color:var(--brand);padding:5px 4px;flex:0 0 auto}
 .qz-btn:active{opacity:.45}

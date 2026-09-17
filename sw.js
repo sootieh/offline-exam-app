@@ -1,5 +1,5 @@
 /* 离线缓存：首次打开后即可断网使用 */
-var CACHE = 'examapp-v5';
+var CACHE = 'examapp-v6';
 var ASSETS = [
   './',
   './index.html',

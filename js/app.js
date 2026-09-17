@@ -36,6 +36,19 @@
   }
   function hideActionSheet() { $('menu-mask').hidden = true; }
 
+  /* 探测 env(safe-area-inset-top) 是否真的生效：部分 iOS standalone
+     场景会返回 0（此时内容会被状态栏玻璃带压住），需要 CSS 兜底 */
+  function detectSafeArea() {
+    try {
+      var d = document.createElement('div');
+      d.style.cssText = 'position:absolute;top:0;left:0;width:0;height:env(safe-area-inset-top);visibility:hidden;pointer-events:none';
+      (document.body || document.documentElement).appendChild(d);
+      var h = d.getBoundingClientRect().height;
+      d.parentNode.removeChild(d);
+      if (!h || h < 1) document.documentElement.classList.add('no-inset');
+    } catch (e) {}
+  }
+
   /* ================= 界面风格 ================= */
   var THEMES = [
     { key: 'moss',      name: '墨绿', brand: '#2e6d5c', bg: '#f6f5f1', darkBrand: '#5fa38e', darkBg: '#111210' },
@@ -846,6 +859,7 @@
 
   /* ================= 初始化 ================= */
   function init() {
+    detectSafeArea();     // 必须在渲染前：决定是否启用顶部安全区兜底
     Quiz.bind();
     bindLargeTitles();
 
