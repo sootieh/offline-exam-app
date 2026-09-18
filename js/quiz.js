@@ -15,7 +15,7 @@
   function cache() {
     ['qz-back', 'qz-bar', 'qz-pos', 'qz-card', 'qz-type', 'qz-timer', 'qz-stem', 'qz-opts',
       'qz-fillwrap', 'qz-fill', 'qz-answer', 'qz-exp', 'qz-prev', 'qz-fav', 'qz-main', 'qz-next',
-      'card-mask', 'sh-grid', 'sh-close', 'sh-hint'].forEach(function (k) { el[k] = $(k); });
+      'qz-body', 'card-mask', 'sh-grid', 'sh-close', 'sh-hint'].forEach(function (k) { el[k] = $(k); });
   }
 
   function shuffle(a) {
@@ -174,11 +174,12 @@
         setTimeout(function () { if (S.i < S.qs.length - 1) { S.i++; render(); } }, 220);
       } else {
         render();
-        // 单选/判断自动判分并跳下一题（可在设置中关闭）
+        // 单选/判断：自动判分并跳下一题（可在 设置 → 答题与翻题 关闭）
         if ((q.type === 'single' || q.type === 'judge') && App.getPref && App.getPref('autoNext')) {
           submitCurrent();
           var session = S, idx = S.i, last = S.i === S.qs.length - 1;
           setTimeout(function () {
+            // 期间若已翻页/退出会话则不跳转，避免误跳
             if (!S || S !== session || S.i !== idx) return;
             if (!last) { S.i++; render(); }
           }, 700);
@@ -371,58 +372,63 @@
   }
 
   /* ---------------- 滑动翻题 ----------------
-     上滑=下一题 下滑=上一题（设置-上下滑动翻题）
-     左滑=下一题 右滑=上一题（设置-左右滑动翻题）
-     与页面滚动共存：内容还能朝手势方向滚动时让给原生滚动 */
+     上滑 / 左滑 → 下一题；下滑 / 右滑 → 上一题
+     与页面滚动共存：内容还能朝手势方向滚动时让给原生滚动，
+     滚到边缘才触发翻题；斜向滑动有轴向锁定，不误触 */
   function bindSwipe() {
     var area = el['qz-body'];
-    var sx = 0, sy = 0, axis = null, tracking = false, scrollY = false;
+    if (!area || !area.addEventListener) return;   // 防御：元素缺失时不阻断初始化
+    var sx = 0, sy = 0, axis = null, mode = null, scrollY = false;
+
+    function reset() { axis = null; mode = null; }
 
     area.addEventListener('touchstart', function (e) {
-      if (!S || e.touches.length !== 1) return;
+      if (!S || !e.touches || e.touches.length !== 1) return;
       sx = e.touches[0].clientX; sy = e.touches[0].clientY;
-      axis = null; tracking = false;
+      reset();
       scrollY = area.scrollHeight > area.clientHeight + 4;
     }, { passive: true });
 
     area.addEventListener('touchmove', function (e) {
-      if (!S || tracking || !e.touches.length) return;
+      if (!S || mode || !e.touches || !e.touches.length) return;
       var dx = e.touches[0].clientX - sx, dy = e.touches[0].clientY - sy;
       var ax = Math.abs(dx), ay = Math.abs(dy);
-      if (ax < 14 && ay < 14) return;
-      if (!axis) {
+      if (ax < 14 && ay < 14) return;                    // 抖动阈值
+      if (!axis) {                                       // 轴向锁定
         if (ax > ay * 1.3) axis = 'h';
         else if (ay > ax * 1.3) axis = 'v';
         else return;
       }
-      // 竖向手势且内容可滚动：若还能朝该方向滚，让给原生滚动
-      if (axis === 'v' && scrollY) {
+      if (axis === 'v' && scrollY) {                     // 还能滚动 → 让给原生滚动
         var atTop = area.scrollTop <= 0;
         var atBottom = area.scrollTop >= area.scrollHeight - area.clientHeight - 1;
-        if ((dy > 0 && !atTop) || (dy < 0 && !atBottom)) { tracking = true; return; }
+        if ((dy > 0 && !atTop) || (dy < 0 && !atBottom)) { mode = 'scroll'; return; }
       }
-      if (axis === 'h') e.preventDefault();   // 横向不吃原生滚动
-      tracking = true;
+      if (axis === 'h' && e.preventDefault) e.preventDefault();  // 横向不吃原生滚动
+      mode = 'swipe';
     }, { passive: false });
 
     area.addEventListener('touchend', function (e) {
-      if (!S || !tracking || !axis) return;
+      if (!S || mode !== 'swipe' || !axis || !e.changedTouches || !e.changedTouches.length) return;
       var t = e.changedTouches[0];
       var dx = t.clientX - sx, dy = t.clientY - sy;
-      var TH = 64;
-      function nav(dir) {   // dir: 1=下一题 -1=上一题
-        if (dir > 0) {
-          if (S.i < S.qs.length - 1) { S.i++; render(); }
-          else if (S.mode !== 'exam') finishPractice();
-        } else if (S.i > 0) { S.i--; render(); }
-      }
+      var TH = 64;                                       // 位移阈值
       if (axis === 'h' && App.getPref && App.getPref('swipeH')) {
         if (dx <= -TH) nav(1); else if (dx >= TH) nav(-1);
       } else if (axis === 'v' && App.getPref && App.getPref('swipeV')) {
         if (dy <= -TH) nav(1); else if (dy >= TH) nav(-1);
       }
-      axis = null; tracking = false;
+      reset();
     });
+  }
+
+  /* dir: 1=下一题  -1=上一题 */
+  function nav(dir) {
+    if (!S) return;
+    if (dir > 0) {
+      if (S.i < S.qs.length - 1) { S.i++; render(); }
+      else if (S.mode !== 'exam') finishPractice();
+    } else if (S.i > 0) { S.i--; render(); }
   }
 
   window.Quiz = { start: start, stop: stop, bind: bind };

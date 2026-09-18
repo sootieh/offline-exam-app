@@ -1,5 +1,5 @@
 /* 离线缓存：首次打开后即可断网使用 */
-var CACHE = 'examapp-v7';
+var CACHE = 'examapp-v8';
 var ASSETS = [
   './',
   './index.html',
@@ -35,13 +35,35 @@ self.addEventListener('activate', function (e) {
   );
 });
 
+/* 应用外壳/脚本走「网络优先」：保证打开就拿到最新版本，离线时回退缓存；
+   体积大的第三方库走「缓存优先」并后台更新 */
 self.addEventListener('fetch', function (e) {
   var req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
+  var url = new URL(req.url);
+  var isCode = req.mode === 'navigate' || /\.(html|js|css|json|webmanifest)$/.test(url.pathname) ||
+    url.pathname === './' || url.pathname.slice(-1) === '/';
+
+  if (isCode) {
+    e.respondWith(
+      fetch(req).then(function (res) {
+        if (res && res.status === 200) {
+          var copy = res.clone();
+          caches.open(CACHE).then(function (c) { c.put(req, copy); });
+        }
+        return res;
+      }).catch(function () {
+        return caches.match(req).then(function (hit) {
+          return hit || (req.mode === 'navigate' ? caches.match('./index.html') : Response.error());
+        });
+      })
+    );
+    return;
+  }
+
   e.respondWith(
     caches.match(req).then(function (hit) {
       if (hit) {
-        // 后台更新
         fetch(req).then(function (res) {
           if (res && res.status === 200) caches.open(CACHE).then(function (c) { c.put(req, res.clone()); });
         }).catch(function () { });
@@ -53,8 +75,6 @@ self.addEventListener('fetch', function (e) {
           caches.open(CACHE).then(function (c) { c.put(req, copy); });
         }
         return res;
-      }).catch(function () {
-        if (req.mode === 'navigate') return caches.match('./index.html');
       });
     })
   );
