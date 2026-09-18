@@ -36,6 +36,158 @@
   }
   function hideActionSheet() { $('menu-mask').hidden = true; }
 
+  /* ================= 应用设置（偏好开关） ================= */
+  var PREFS_KEY = 'examapp-prefs';
+  var PREF_DEF = { autoNext: true, swipeV: true, swipeH: true, lanSync: false, lanAddr: '' };
+  function getPrefs() {
+    try { return Object.assign({}, PREF_DEF, JSON.parse(localStorage.getItem(PREFS_KEY) || '{}')); }
+    catch (e) { return Object.assign({}, PREF_DEF); }
+  }
+  function getPref(k) { return getPrefs()[k]; }
+  function setPref(k, v) {
+    var p = getPrefs(); p[k] = v;
+    try { localStorage.setItem(PREFS_KEY, JSON.stringify(p)); } catch (e) {}
+  }
+  function bindSwitch(id, key, onChange) {
+    var b = $(id);
+    if (!b) return;
+    function paint() { b.classList.toggle('on', !!getPref(key)); }
+    paint();
+    b.onclick = function () {
+      var v = !getPref(key);
+      setPref(key, v);
+      paint();
+      if (onChange) onChange(v);
+    };
+  }
+
+  /* ================= 局域网共享 ================= */
+  var lanList = [];          // 服务器上的共享文件
+  var lanTimer = null;
+
+  function lanBase() {
+    var p = (getPref('lanAddr') || '').trim().replace(/\/+$/, '');
+    if (p) return p;
+    if (location.protocol === 'http:' && !/^(localhost|127\.0\.0\.1|\[)/.test(location.hostname)) {
+      return location.origin;
+    }
+    return '';
+  }
+
+  function setLanStatus(msg, isErr) {
+    var el = $('lan-status');
+    if (!el) return;
+    el.textContent = msg || '';
+    el.className = 'lan-status' + (isErr ? ' err' : '');
+  }
+
+  function renderLanList() {
+    var wrap = $('lan-list');
+    if (!wrap) return;
+    if (!lanList.length) {
+      wrap.innerHTML = '<div class="lan-empty">暂无共享题库</div>';
+      return;
+    }
+    wrap.innerHTML = lanList.map(function (f) {
+      return '<div class="lan-item" data-id="' + esc(f.id) + '" data-name="' + esc(f.name) + '">' +
+        '<div class="li-txt"><div class="li-name">' + esc(f.name) + '</div>' +
+        '<div class="li-sub">' + (f.size > 1048576 ? (f.size / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(f.size / 1024)) + ' KB') +
+        ' · ' + new Date(f.ts).toLocaleString('zh-CN') + '</div></div>' +
+        '<button class="btn small" data-act="get">导入</button>' +
+        '<button class="btn small danger" data-act="del">删除</button></div>';
+    }).join('');
+    Array.prototype.forEach.call(wrap.children, function (row) {
+      var id = row.getAttribute('data-id'), name = row.getAttribute('data-name');
+      Array.prototype.forEach.call(row.children, function (b) {
+        if (b.getAttribute('data-act') === 'get') b.onclick = function () { lanImport(id, name, b); };
+        else b.onclick = function () {
+          if (!confirm('从服务器删除「' + name + '」？')) return;
+          lanFetch('/api/file/' + id, { method: 'DELETE' })
+            .then(function () { App.toast('已删除'); lanRefresh(); })
+            .catch(function (e) { App.toast('删除失败：' + e.message); });
+        };
+      });
+    });
+  }
+
+  function lanFetch(path, opt) {
+    var base = lanBase();
+    if (!base) return Promise.reject(new Error('未设置服务器地址'));
+    return fetch(base + path, Object.assign({ cache: 'no-store' }, opt || {}));
+  }
+
+  function lanRefresh() {
+    if (!getPref('lanSync')) return;
+    if (!lanBase()) {
+      setLanStatus(location.protocol === 'https:'
+        ? '当前是 HTTPS 页面，浏览器禁止直连局域网 HTTP 服务器。请用电脑上 lan-server.py 打印的网址打开本应用，或在上方填写服务器地址。'
+        : '请先在上方填写服务器地址（电脑上运行 lan-server.py 后会打印）。', true);
+      renderLanList();
+      return;
+    }
+    setLanStatus('连接中…');
+    lanFetch('/api/banks').then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(function (list) {
+      lanList = list || [];
+      setLanStatus('已连接 · 共 ' + lanList.length + ' 个共享题库');
+      renderLanList();
+    }).catch(function () {
+      lanList = [];
+      setLanStatus('无法连接 ' + lanBase() + '（若当前是 HTTPS 页面，浏览器会拦截局域网 HTTP 请求；请通过 lan-server.py 的地址打开本应用）', true);
+      renderLanList();
+    });
+  }
+
+  function lanImport(id, name, btn) {
+    if (btn) { btn.disabled = true; btn.textContent = '下载中…'; }
+    lanFetch('/api/file/' + id).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.blob();
+    }).then(function (blob) {
+      var file = new File([blob], name, { type: blob.type || 'application/octet-stream' });
+      return Parser.parseFile(file).then(function (res) {
+        App.go('page-import');
+        showPreview(res, name.replace(/\.[^.]+$/, ''));
+        App.toast('解析出 ' + res.questions.length + ' 题，确认后导入');
+      });
+    }).catch(function (e) {
+      App.toast('导入失败：' + e.message);
+    }).finally(function () {
+      if (btn) { btn.disabled = false; btn.textContent = '导入'; }
+    });
+  }
+
+  /* 把本机题库以 JSON 上传到局域网服务器 */
+  function shareBankToLan(bankId) {
+    var base = lanBase();
+    if (!base) { App.toast('请先在 设置 → 局域网共享 填写服务器地址'); return Promise.resolve(); }
+    return DB.getBank(bankId).then(function (b) {
+      return DB.getQuestions(bankId).then(function (qs) {
+        var payload = JSON.stringify({ name: b.name, questions: qs });
+        var fname = b.name.replace(/[\\/:*?"<>|]/g, '_') + '.json';
+        return fetch(base + '/api/upload?name=' + encodeURIComponent(fname), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: payload
+        });
+      });
+    }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      App.toast('已共享到局域网服务器');
+    }).catch(function (e) {
+      App.toast('共享失败：' + (location.protocol === 'https:' ? 'HTTPS 页面无法访问局域网 HTTP 服务器' : e.message));
+    });
+  }
+
+  function startLanPolling() {
+    clearInterval(lanTimer);
+    if (!getPref('lanSync')) return;
+    lanRefresh();
+    lanTimer = setInterval(lanRefresh, 10000);
+  }
+
   /* 探测 env(safe-area-inset-top) 是否真的生效：部分 iOS standalone
      场景会返回 0（此时内容会被状态栏玻璃带压住），需要 CSS 兜底 */
   function detectSafeArea() {
@@ -266,6 +418,7 @@
     if (!b) return;
     showActionSheet(b.name, [
       { label: '重命名', icon: 'rename', act: 'rename' },
+      { label: '共享到局域网', icon: 'share', act: 'share' },
       { label: '删除题库', icon: 'trash', danger: true, act: 'delete' }
     ], function (act) {
       if (act === 'rename') {
@@ -278,6 +431,8 @@
           }
           App.toast('已重命名');
         });
+      } else if (act === 'share') {
+        shareBankToLan(b.id);
       } else if (act === 'delete') {
         if (!confirm('确定删除题库「' + b.name + '」？\n\n其中的 ' + (App.counts[b.id] || 0) + ' 道题目和答题记录将一并删除，此操作不可恢复。')) return;
         DB.deleteBank(b.id).then(refresh).then(function () {
@@ -870,6 +1025,26 @@
       else updateThemeColorMeta();
     } catch (e) { updateThemeColorMeta(); }
     renderThemeRow();
+
+    // 答题与翻题偏好开关
+    bindSwitch('sw-autoNext', 'autoNext');
+    bindSwitch('sw-swipeV', 'swipeV');
+    bindSwitch('sw-swipeH', 'swipeH');
+
+    // 局域网共享
+    var lanPanel = $('lan-panel');
+    function paintLanPanel() {
+      lanPanel.hidden = !getPref('lanSync');
+      if (getPref('lanSync')) { $('lan-addr').value = getPref('lanAddr') || ''; startLanPolling(); }
+      else clearInterval(lanTimer);
+    }
+    bindSwitch('sw-lanSync', 'lanSync', paintLanPanel);
+    paintLanPanel();
+    $('lan-addr').onchange = function () {
+      setPref('lanAddr', $('lan-addr').value.trim());
+      lanRefresh();
+    };
+    $('lan-addr').onkeydown = function (e) { if (e.key === 'Enter') $('lan-addr').onchange(); };
     if (window.matchMedia) {
       var mq = window.matchMedia('(prefers-color-scheme: dark)');
       var onScheme = function () { updateThemeColorMeta(); };
@@ -1049,6 +1224,9 @@
   }
 
   App.demo = loadDemo;
+  App.getPref = getPref;
+  App.setPref = setPref;
+  App.shareBankToLan = shareBankToLan;
   window.App = App;
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();

@@ -174,6 +174,15 @@
         setTimeout(function () { if (S.i < S.qs.length - 1) { S.i++; render(); } }, 220);
       } else {
         render();
+        // 单选/判断自动判分并跳下一题（可在设置中关闭）
+        if ((q.type === 'single' || q.type === 'judge') && App.getPref && App.getPref('autoNext')) {
+          submitCurrent();
+          var session = S, idx = S.i, last = S.i === S.qs.length - 1;
+          setTimeout(function () {
+            if (!S || S !== session || S.i !== idx) return;
+            if (!last) { S.i++; render(); }
+          }, 700);
+        }
       }
     }
   }
@@ -358,6 +367,62 @@
       var st = S.states[S.i];
       if (!st.done) st.v = e.target.value;
     };
+    bindSwipe();
+  }
+
+  /* ---------------- 滑动翻题 ----------------
+     上滑=下一题 下滑=上一题（设置-上下滑动翻题）
+     左滑=下一题 右滑=上一题（设置-左右滑动翻题）
+     与页面滚动共存：内容还能朝手势方向滚动时让给原生滚动 */
+  function bindSwipe() {
+    var area = el['qz-body'];
+    var sx = 0, sy = 0, axis = null, tracking = false, scrollY = false;
+
+    area.addEventListener('touchstart', function (e) {
+      if (!S || e.touches.length !== 1) return;
+      sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+      axis = null; tracking = false;
+      scrollY = area.scrollHeight > area.clientHeight + 4;
+    }, { passive: true });
+
+    area.addEventListener('touchmove', function (e) {
+      if (!S || tracking || !e.touches.length) return;
+      var dx = e.touches[0].clientX - sx, dy = e.touches[0].clientY - sy;
+      var ax = Math.abs(dx), ay = Math.abs(dy);
+      if (ax < 14 && ay < 14) return;
+      if (!axis) {
+        if (ax > ay * 1.3) axis = 'h';
+        else if (ay > ax * 1.3) axis = 'v';
+        else return;
+      }
+      // 竖向手势且内容可滚动：若还能朝该方向滚，让给原生滚动
+      if (axis === 'v' && scrollY) {
+        var atTop = area.scrollTop <= 0;
+        var atBottom = area.scrollTop >= area.scrollHeight - area.clientHeight - 1;
+        if ((dy > 0 && !atTop) || (dy < 0 && !atBottom)) { tracking = true; return; }
+      }
+      if (axis === 'h') e.preventDefault();   // 横向不吃原生滚动
+      tracking = true;
+    }, { passive: false });
+
+    area.addEventListener('touchend', function (e) {
+      if (!S || !tracking || !axis) return;
+      var t = e.changedTouches[0];
+      var dx = t.clientX - sx, dy = t.clientY - sy;
+      var TH = 64;
+      function nav(dir) {   // dir: 1=下一题 -1=上一题
+        if (dir > 0) {
+          if (S.i < S.qs.length - 1) { S.i++; render(); }
+          else if (S.mode !== 'exam') finishPractice();
+        } else if (S.i > 0) { S.i--; render(); }
+      }
+      if (axis === 'h' && App.getPref && App.getPref('swipeH')) {
+        if (dx <= -TH) nav(1); else if (dx >= TH) nav(-1);
+      } else if (axis === 'v' && App.getPref && App.getPref('swipeV')) {
+        if (dy <= -TH) nav(1); else if (dy >= TH) nav(-1);
+      }
+      axis = null; tracking = false;
+    });
   }
 
   window.Quiz = { start: start, stop: stop, bind: bind };

@@ -282,6 +282,36 @@ D. 管制
         <p class="hint">跟随系统深色模式；所选风格即时生效并自动记住。</p>
       </div>
       <div class="block">
+        <div class="blk-title">答题与翻题</div>
+        <div class="set-row">
+          <div class="sr-txt"><div class="sr-t">自动跳下一题</div><div class="sr-s">练习中单选题、判断题选定后自动判分并跳转下一题</div></div>
+          <button class="switch" id="sw-autoNext" aria-label="自动跳下一题"></button>
+        </div>
+        <div class="set-row">
+          <div class="sr-txt"><div class="sr-t">上下滑动翻题</div><div class="sr-s">答题界面上滑下一题，下滑上一题</div></div>
+          <button class="switch" id="sw-swipeV" aria-label="上下滑动翻题"></button>
+        </div>
+        <div class="set-row">
+          <div class="sr-txt"><div class="sr-t">左右滑动翻题</div><div class="sr-s">答题界面左滑下一题，右滑上一题</div></div>
+          <button class="switch" id="sw-swipeH" aria-label="左右滑动翻题"></button>
+        </div>
+      </div>
+      <div class="block">
+        <div class="blk-title">局域网共享</div>
+        <div class="set-row">
+          <div class="sr-txt"><div class="sr-t">接收局域网题库</div><div class="sr-s">同一局域网设备上传的题库自动出现在下方，可一键导入</div></div>
+          <button class="switch" id="sw-lanSync" aria-label="接收局域网题库"></button>
+        </div>
+        <div class="lan-panel" id="lan-panel" hidden>
+          <label class="lan-field"><span>服务器地址（留空 = 当前地址）</span>
+            <input class="input" id="lan-addr" placeholder="如 http://192.168.1.100:8765" inputmode="url">
+          </label>
+          <div class="lan-status" id="lan-status"></div>
+          <div class="lan-list" id="lan-list"></div>
+        </div>
+        <p class="hint">在电脑上运行项目中的 lan-server.py，局域网设备用浏览器打开它打印的网址即可上传题库文件。注意：HTTPS 页面无法直连局域网 HTTP 服务器，建议通过 lan-server.py 打开的地址使用本应用。</p>
+      </div>
+      <div class="block">
         <div class="blk-title">数据备份</div>
         <button class="btn ghost big" id="btn-export">导出全部数据（JSON）</button>
         <button class="btn ghost big" id="btn-import-bak" style="margin-top:10px">从备份恢复</button>
@@ -297,7 +327,7 @@ D. 管制
         <div class="blk-title">关于</div>
         <div class="tip">
           <p>纯本地运行，所有数据存在你的手机浏览器里，不上传任何服务器。</p>
-          <p>版本号 1.0.4 · 离线可用 · 支持深色模式</p>
+          <p>版本号 1.0.5 · 离线可用 · 支持深色模式</p>
         </div>
       </div>
       <div class="pad"></div>
