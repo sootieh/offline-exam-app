@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
-<title>考试宝 · 刷题</title>
+<title>考神 · 刷题</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="考试宝">
+<meta name="apple-mobile-web-app-title" content="考神">
 <meta name="theme-color" content="#f6f5f1">
 <meta name="format-detection" content="telephone=no">
 <meta name="color-scheme" content="light dark">
@@ -284,7 +284,7 @@ D. 管制
       <div class="block">
         <div class="blk-title">答题与翻题</div>
         <div class="set-row">
-          <div class="sr-txt"><div class="sr-t">自动跳下一题</div><div class="sr-s">练习中单选题、判断题选定后<b>不判分</b>，停顿片刻直接翻到下一题；需要看对错请关闭此项或点「确认作答」</div></div>
+          <div class="sr-txt"><div class="sr-t">自动跳下一题</div><div class="sr-s">单选题、判断题选定后直接跳转下一题</div></div>
           <button class="switch" id="sw-autoNext" aria-label="自动跳下一题"></button>
         </div>
         <div class="set-row">
@@ -309,11 +309,16 @@ D. 管制
         <button class="btn danger big" id="btn-clear-records">清空所有答题记录（保留题库）</button>
         <button class="btn danger big" id="btn-wipe" style="margin-top:10px">删除全部数据</button>
       </div>
+      <div class="block">
+        <div class="blk-title">应用更新</div>
+        <button class="btn ghost big" id="btn-force-refresh">强制刷新 PWA（清除缓存并重载）</button>
+        <p class="hint" id="fr-hint">打开后没看到新版本时用这个：清除离线缓存、注销 Service Worker，并重新从服务器拉取最新代码。题库与答题记录不会丢失。</p>
+      </div>
       <div class="block tip-block">
         <div class="blk-title">关于</div>
         <div class="tip">
           <p>纯本地运行，所有数据存在你的手机浏览器里，不上传任何服务器。</p>
-          <p>版本号 1.0.7 · 离线可用 · 支持深色模式</p>
+          <p>版本号 1.1.0 · 离线可用 · 支持深色模式</p>
         </div>
       </div>
       <div class="pad"></div>

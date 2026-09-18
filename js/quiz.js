@@ -168,8 +168,8 @@
     } else {
       st.v = [k];
       if (S.mode === 'exam') {
-        st.done = true;
-        saveRecord(q, st, false);
+        // 考试：只记录所选，不判分不显示答案（交卷时统一判分），短暂停顿后自动跳下一题
+        // 注意不能在此置 st.done / 写记录：否则交卷时会被当成"已判过"而漏判、且 seen 会重复计数
         render();
         setTimeout(function () { if (S.i < S.qs.length - 1) { S.i++; render(); } }, 220);
       } else {
@@ -270,8 +270,9 @@
     var answered = 0;
     q.forEach(function (qq, i) {
       var st = sts[i];
-      if (!st.done && st.v && (Array.isArray(st.v) ? st.v.length : st.v)) {
+      if (st.v && (Array.isArray(st.v) ? st.v.length : st.v)) {
         answered++;
+        // 始终依据所选项重新判分，避免因中途标记 done 而漏判
         var r = Parser.check(qq, st.v);
         st.ok = r.ok; st.partial = r.partial; st.done = true;
       } else if (!st.done) {

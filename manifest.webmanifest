@@ -1,6 +1,6 @@
 {
-  "name": "考试宝 · 离线刷题",
-  "short_name": "考试宝",
+  "name": "考神 · 离线刷题",
+  "short_name": "考神",
   "description": "导入题库，离线刷题、模拟考试、错题本",
   "start_url": "./index.html",
   "scope": "./",
@@ -17,6 +17,6 @@
   "apple": {
     "mobile-web-app-capable": true,
     "mobile-web-app-status-bar-style": "default",
-    "mobile-web-app-title": "考试宝"
+    "mobile-web-app-title": "考神"
   }
 }

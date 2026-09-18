@@ -996,9 +996,34 @@
     $('btn-settings').onclick = function () { App.go('page-settings'); };
     $('btn-export').onclick = function () {
       DB.exportAll().then(function (data) {
-        download('考试宝备份-' + dayKey(Date.now()) + '.json', JSON.stringify(data), 'application/json');
+        download('考神备份-' + dayKey(Date.now()) + '.json', JSON.stringify(data), 'application/json');
         App.toast('已导出备份文件');
       });
+    };
+
+    // 强制刷新 PWA：清缓存 + 注销 Service Worker + 重载
+    $('btn-force-refresh').onclick = function () {
+      if (!confirm('将清除离线缓存并重新加载应用。\n\n题库、答题记录和收藏都不会丢失。继续？')) return;
+      var btn = $('btn-force-refresh');
+      btn.disabled = true; btn.textContent = '正在刷新…';
+      try { sessionStorage.removeItem('examapp-sw-reloaded'); } catch (e) {}
+      var jobs = [];
+      if (window.caches && caches.keys) {
+        jobs.push(caches.keys().then(function (ks) {
+          return Promise.all(ks.map(function (k) { return caches.delete(k); }));
+        }));
+      }
+      if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+        jobs.push(navigator.serviceWorker.getRegistrations().then(function (rs) {
+          return Promise.all(rs.map(function (r) { return r.unregister(); }));
+        }));
+      }
+      Promise.all(jobs).then(go).catch(go);
+      function go() {
+        // 加时间戳避免命中任何中间缓存，重载后 Service Worker 会重新注册
+        var url = location.pathname.replace(/index\.html$/, '') + '?fresh=' + Date.now();
+        location.replace(url);
+      }
     };
     $('btn-import-bak').onclick = function () { $('bak-file').click(); };
     $('bak-file').onchange = function (e) {
