@@ -127,6 +127,59 @@
     markThemeRow();
   }
 
+  /* ================= 应用图标 ================= */
+  var ICON_VARIANTS = [
+    { key: 'moss',  name: '墨绿' },
+    { key: 'glyph', name: '考字' },
+    { key: 'medal', name: '勋章' },
+    { key: 'star',  name: '星辰' },
+    { key: 'check', name: '极简' }
+  ];
+  var ICON_KEY = 'examapp-icon';
+  function currentIconKey() {
+    var k = null;
+    try { k = localStorage.getItem(ICON_KEY); } catch (e) {}
+    return ICON_VARIANTS.some(function (v) { return v.key === k; }) ? k : 'moss';
+  }
+  function applyIcon(key, save) {
+    var v = ICON_VARIANTS.filter(function (x) { return x.key === key; })[0];
+    if (!v) key = 'moss';
+    var man = document.querySelector('link[rel="manifest"]');
+    if (man) man.href = 'manifest-' + key + '.webmanifest';
+    var at = document.querySelector('link[rel="apple-touch-icon"]');
+    if (at) at.href = 'icons/' + key + '/icon-180.png';
+    var fav = document.querySelector('link[rel="icon"]');
+    if (fav) fav.href = 'icons/' + key + '/icon-192.png';
+    if (save) { try { localStorage.setItem(ICON_KEY, key); } catch (e) {} }
+    markIconRow();
+  }
+  function markIconRow() {
+    var row = $('icon-row');
+    if (!row) return;
+    var cur = currentIconKey();
+    Array.prototype.forEach.call(row.children, function (c) {
+      c.classList.toggle('on', c.getAttribute('data-icon') === cur);
+    });
+  }
+  function renderIconRow() {
+    var row = $('icon-row');
+    if (!row) return;
+    row.innerHTML = ICON_VARIANTS.map(function (v) {
+      return '<button class="icon-opt" data-icon="' + v.key + '" aria-label="' + v.name + '">' +
+        '<span class="icon-sw"><img src="icons/' + v.key + '/icon-192.png" alt=""></span>' +
+        '<span class="icon-name">' + v.name + '</span></button>';
+    }).join('');
+    Array.prototype.forEach.call(row.children, function (c) {
+      c.onclick = function () {
+        var k = c.getAttribute('data-icon');
+        if (k === currentIconKey()) return;
+        applyIcon(k, true);
+        App.toast('已切换，重加主屏幕后生效');
+      };
+    });
+    markIconRow();
+  }
+
   var App = {
     banks: [],
     records: {},          // bankId -> {qid: rec}
@@ -895,6 +948,10 @@
       else updateThemeColorMeta();
     } catch (e) { updateThemeColorMeta(); }
     renderThemeRow();
+
+    // 应用图标：恢复上次选择 + 渲染选择器
+    applyIcon(currentIconKey(), false);
+    renderIconRow();
 
     // 答题与翻题偏好开关
     bindSwitch('sw-autoNext', 'autoNext');

@@ -1,5 +1,6 @@
 /* 离线缓存：首次打开后即可断网使用 */
-var CACHE = 'examapp-v10';
+var CACHE = 'examapp-v11';
+var ICON_VARIANTS = ['moss', 'glyph', 'medal', 'star', 'check'];
 var ASSETS = [
   './',
   './index.html',
@@ -10,10 +11,12 @@ var ASSETS = [
   './js/quiz.js',
   './js/app.js',
   './vendor/xlsx.full.min.js',
-  './vendor/fflate.min.js',
-  './icons/icon-180.png',
-  './icons/icon-192.png'
-];
+  './vendor/fflate.min.js'
+].concat.apply([], ICON_VARIANTS.map(function (v) {
+  return ['./manifest-' + v + '.webmanifest',
+    './icons/' + v + '/icon-180.png',
+    './icons/' + v + '/icon-192.png'];
+}));
 
 self.addEventListener('install', function (e) {
   e.waitUntil(
