@@ -174,15 +174,15 @@
         setTimeout(function () { if (S.i < S.qs.length - 1) { S.i++; render(); } }, 220);
       } else {
         render();
-        // 单选/判断：自动判分并跳下一题（可在 设置 → 答题与翻题 关闭）
+        // 单选/判断：选定后不判分，停顿片刻直接跳下一题（可在 设置 → 答题与翻题 关闭）
+        // 仅记录所选项，不显示对错、不写入正确/错误记录；需要判分时关掉开关或点「确认作答」
         if ((q.type === 'single' || q.type === 'judge') && App.getPref && App.getPref('autoNext')) {
-          submitCurrent();
           var session = S, idx = S.i, last = S.i === S.qs.length - 1;
           setTimeout(function () {
             // 期间若已翻页/退出会话则不跳转，避免误跳
             if (!S || S !== session || S.i !== idx) return;
             if (!last) { S.i++; render(); }
-          }, 700);
+          }, 420);
         }
       }
     }
