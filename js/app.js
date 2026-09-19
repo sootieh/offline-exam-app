@@ -150,12 +150,14 @@
   function applyIcon(key, save) {
     var v = ICON_VARIANTS.filter(function (x) { return x.key === key; })[0];
     if (!v) key = 'moss';
+    // 带版本参数：绕过 iOS/HTTP 对旧 URL 的元数据缓存（曾导致主屏幕名称停在旧名）
+    var ver = '?v=130';
     var man = document.querySelector('link[rel="manifest"]');
-    if (man) man.href = 'manifest-' + key + '.webmanifest';
+    if (man) man.href = 'manifest-' + key + '.webmanifest' + ver;
     var at = document.querySelector('link[rel="apple-touch-icon"]');
-    if (at) at.href = 'icons/' + key + '/icon-180.png';
+    if (at) at.href = 'icons/' + key + '/icon-180.png' + ver;
     var fav = document.querySelector('link[rel="icon"]');
-    if (fav) fav.href = 'icons/' + key + '/icon-192.png';
+    if (fav) fav.href = 'icons/' + key + '/icon-192.png' + ver;
     if (save) { try { localStorage.setItem(ICON_KEY, key); } catch (e) {} }
     markIconRow();
   }

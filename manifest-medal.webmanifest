@@ -2,7 +2,7 @@
   "name": "考神 · 离线刷题",
   "short_name": "考神",
   "description": "导入题库，离线刷题、模拟考试、错题本",
-  "start_url": "./index.html",
+  "start_url": "./index.html?v=13",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
