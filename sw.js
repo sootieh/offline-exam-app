@@ -1,6 +1,9 @@
 /* 离线缓存：首次打开后即可断网使用 */
-var CACHE = 'examapp-v11';
-var ICON_VARIANTS = ['moss', 'glyph', 'medal', 'star', 'check'];
+var CACHE = 'examapp-v12';
+var ICON_VARIANTS = ['moss', 'glyph',
+  'check-wx', 'check-zfb', 'check-ha',
+  'star-wx', 'star-zfb', 'star-ha',
+  'medal-wx', 'medal-zfb', 'medal-ha'];
 var ASSETS = [
   './',
   './index.html',
@@ -38,7 +41,18 @@ self.addEventListener('activate', function (e) {
   );
 });
 
-/* 应用外壳/脚本走「网络优先」：保证打开就拿到最新版本，离线时回退缓存；
+/* 网络请求超时保护：慢网/弱网时不再干等，直接用已缓存版本（后台仍会更新） */
+var NET_TIMEOUT = 1500;
+function withTimeout(p, ms) {
+  return new Promise(function (res, rej) {
+    var done = false;
+    var t = setTimeout(function () { if (!done) { done = true; rej(new Error('timeout')); } }, ms);
+    p.then(function (v) { if (!done) { done = true; clearTimeout(t); res(v); } },
+      function (e) { if (!done) { done = true; clearTimeout(t); rej(e); } });
+  });
+}
+
+/* 应用外壳/脚本走「网络优先」：保证打开就拿到最新版本，离线或慢网时回退缓存；
    体积大的第三方库走「缓存优先」并后台更新 */
 self.addEventListener('fetch', function (e) {
   var req = e.request;
@@ -49,7 +63,7 @@ self.addEventListener('fetch', function (e) {
 
   if (isCode) {
     e.respondWith(
-      fetch(req).then(function (res) {
+      withTimeout(fetch(req), NET_TIMEOUT).then(function (res) {
         if (res && res.status === 200) {
           var copy = res.clone();
           caches.open(CACHE).then(function (c) { c.put(req, copy); });

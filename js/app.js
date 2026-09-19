@@ -129,11 +129,17 @@
 
   /* ================= 应用图标 ================= */
   var ICON_VARIANTS = [
-    { key: 'moss',  name: '墨绿' },
-    { key: 'glyph', name: '考字' },
-    { key: 'medal', name: '勋章' },
-    { key: 'star',  name: '星辰' },
-    { key: 'check', name: '极简' }
+    { key: 'moss',      name: '墨绿' },
+    { key: 'glyph',     name: '考字' },
+    { key: 'check-wx',  name: '极简绿' },
+    { key: 'check-zfb', name: '极简蓝' },
+    { key: 'check-ha',  name: '极简天蓝' },
+    { key: 'star-wx',   name: '星辰绿' },
+    { key: 'star-zfb',  name: '星辰蓝' },
+    { key: 'star-ha',   name: '星辰天蓝' },
+    { key: 'medal-wx',  name: '勋章绿' },
+    { key: 'medal-zfb', name: '勋章蓝' },
+    { key: 'medal-ha',  name: '勋章天蓝' }
   ];
   var ICON_KEY = 'examapp-icon';
   function currentIconKey() {
@@ -1147,6 +1153,12 @@
       window.addEventListener('load', function () {
         navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(function () { });
       });
+      // 回到前台时主动检查一次更新，避免长期停留在旧版本
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState !== 'visible' || !navigator.serviceWorker) return;
+        navigator.serviceWorker.getRegistration().then(function (r) { if (r) r.update(); }).catch(function () { });
+      });
+
       // 新版本接管后静默刷新一次，确保立刻用上最新代码（每次会话只刷一次）
       var reloaded = false;
       try { reloaded = sessionStorage.getItem('examapp-sw-reloaded') === '1'; } catch (e) {}

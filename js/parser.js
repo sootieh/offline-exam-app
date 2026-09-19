@@ -510,6 +510,24 @@
     return finalize(txtToQuestions(t, warnings), warnings);
   }
 
+  /* 按需加载第三方解析库：Excel 库约 930KB，绝不能放在首屏关键路径上 */
+  var vendorLoaders = {};
+  function loadVendor(key, src) {
+    if (typeof window[key] !== 'undefined') return Promise.resolve();
+    if (!vendorLoaders[key]) {
+      vendorLoaders[key] = new Promise(function (res, rej) {
+        var s = document.createElement('script');
+        s.src = src; s.async = true;
+        s.onload = function () { res(); };
+        s.onerror = function () { rej(new Error('解析组件加载失败，请联网一次后再试')); };
+        (document.head || document.documentElement).appendChild(s);
+      });
+    }
+    return vendorLoaders[key];
+  }
+  function needXLSX() { return loadVendor('XLSX', 'vendor/xlsx.full.min.js'); }
+  function needFFlate() { return loadVendor('fflate', 'vendor/fflate.min.js'); }
+
   /* Excel：解析全部工作表 */
   function parseWorkbook(data) {
     if (typeof XLSX === 'undefined') throw new Error('Excel 解析组件未加载');
@@ -533,19 +551,22 @@
 
       if (/\.(xlsx|xls|xlsm|ods)$/.test(name)) {
         fr.onload = function (e) {
-          try {
-            var sheets = parseWorkbook(e.target.result);
-            var warnings = [], all = [];
-            sheets.forEach(function (s) {
-              all = all.concat(s.questions);
-              s.warnings.forEach(function (w) { warnings.push('[' + s.name + '] ' + w); });
-            });
-            var empty = sheets.filter(function (s) { return !s.questions.length; })
-              .map(function (s) { return s.name; });
-            if (empty.length) warnings.push('以下工作表未识别到题目：' + empty.join('、'));
-            if (sheets.length > 1) warnings.unshift('共读取到 ' + sheets.length + ' 个工作表，合计 ' + all.length + ' 题');
-            res({ questions: all, warnings: warnings, sheets: sheets });
-          } catch (err) { rej(err); }
+          var data = e.target.result;
+          needXLSX().then(function () {
+            try {
+              var sheets = parseWorkbook(data);
+              var warnings = [], all = [];
+              sheets.forEach(function (s) {
+                all = all.concat(s.questions);
+                s.warnings.forEach(function (w) { warnings.push('[' + s.name + '] ' + w); });
+              });
+              var empty = sheets.filter(function (s) { return !s.questions.length; })
+                .map(function (s) { return s.name; });
+              if (empty.length) warnings.push('以下工作表未识别到题目：' + empty.join('、'));
+              if (sheets.length > 1) warnings.unshift('共读取到 ' + sheets.length + ' 个工作表，合计 ' + all.length + ' 题');
+              res({ questions: all, warnings: warnings, sheets: sheets });
+            } catch (err) { rej(err); }
+          }).catch(rej);
         };
         fr.onerror = function () { rej(new Error('文件读取失败')); };
         fr.readAsArrayBuffer(file);
@@ -554,8 +575,11 @@
 
       if (/\.docx$/.test(name)) {
         fr.onload = function (e) {
-          try { res(parseDocx(e.target.result)); }
-          catch (err) { rej(err); }
+          var data = e.target.result;
+          needFFlate().then(function () {
+            try { res(parseDocx(data)); }
+            catch (err) { rej(err); }
+          }).catch(rej);
         };
         fr.onerror = function () { rej(new Error('文件读取失败')); };
         fr.readAsArrayBuffer(file);

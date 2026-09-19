@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """生成「考神」App 图标：5 个版本 × 4 种尺寸（临时脚本，生成后可删）"""
-import math, os, glob
+import math, os, glob, sys
 from PIL import Image, ImageDraw, ImageFilter, ImageChops, ImageFont
 
-OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'icons')
+OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'icons')  # 仓库根的 icons/
 N = 4.8            # 超椭圆指数（iOS squircle）
-SS = 8             # 超采样倍数
+SS = 6             # 超采样倍数（质量足够，内存友好）
 SIZES = (167, 180, 192, 512)
 
 
@@ -154,8 +154,8 @@ def draw_glyph(S):
 
 
 # ---------- 版本 3：勋章 · 琥珀金 ----------
-def draw_medal(S):
-    img, mask = glass_base(S, (226, 158, 74), (150, 88, 28))
+def draw_medal(S, top=(226, 158, 74), bottom=(150, 88, 28)):
+    img, mask = glass_base(S, top, bottom)
     d = ImageDraw.Draw(img)
     cx, cy = S * 0.5, S * 0.56
     R = S * 0.235
@@ -178,8 +178,8 @@ def draw_medal(S):
 
 
 # ---------- 版本 4：星辰 · 深紫蓝 ----------
-def draw_star(S):
-    img, mask = glass_base(S, (108, 96, 186), (44, 38, 92))
+def draw_star(S, top=(108, 96, 186), bottom=(44, 38, 92)):
+    img, mask = glass_base(S, top, bottom)
     img = Image.alpha_composite(img, radial(S, S * 0.5, S * 0.48, S * 0.6, (190, 170, 255), 78))
     d = ImageDraw.Draw(img)
     cx, cy = S * 0.5, S * 0.48
@@ -197,8 +197,8 @@ def draw_star(S):
 
 
 # ---------- 版本 5：极简对勾 · 石墨 ----------
-def draw_check(S):
-    img, mask = glass_base(S, (110, 114, 126), (34, 36, 44))
+def draw_check(S, top=(110, 114, 126), bottom=(34, 36, 44)):
+    img, mask = glass_base(S, top, bottom)
     d = ImageDraw.Draw(img)
     cx, cy = S * 0.5, S * 0.5
     R = S * 0.29
@@ -217,25 +217,39 @@ def draw_check(S):
     return img, mask
 
 
+# 品牌参考色
+WX = ((32, 200, 122), (8, 150, 82))      # 微信绿
+ZFB = ((74, 150, 255), (12, 96, 226))    # 支付宝蓝
+HA = ((96, 206, 248), (14, 150, 210))    # Home Assistant 天蓝
+
 VARIANTS = [
-    ('moss', '墨绿', draw_moss),
-    ('glyph', '考字', draw_glyph),
-    ('medal', '勋章', draw_medal),
-    ('star', '星辰', draw_star),
-    ('check', '极简', draw_check),
+    ('moss', '墨绿', draw_moss, None, None),
+    ('glyph', '考字', draw_glyph, None, None),
+    ('check-wx', '极简绿', draw_check, *WX),
+    ('check-zfb', '极简蓝', draw_check, *ZFB),
+    ('check-ha', '极简天蓝', draw_check, *HA),
+    ('star-wx', '星辰绿', draw_star, *WX),
+    ('star-zfb', '星辰蓝', draw_star, *ZFB),
+    ('star-ha', '星辰天蓝', draw_star, *HA),
+    ('medal-wx', '勋章绿', draw_medal, *WX),
+    ('medal-zfb', '勋章蓝', draw_medal, *ZFB),
+    ('medal-ha', '勋章天蓝', draw_medal, *HA),
 ]
 
 if __name__ == '__main__':
-    for key, name, fn in VARIANTS:
+    # 可选参数：只生成指定 key（分批跑，避免大图占内存被系统杀）
+    only = set(sys.argv[1:])
+    import gc
+    for key, name, fn, top, bottom in VARIANTS:
+        if only and key not in only:
+            continue
         d = os.path.join(OUT, key)
         os.makedirs(d, exist_ok=True)
         S = 512 * SS
-        img, mask = fn(S)
-        base = finish(img, mask, 512)
+        img, mask = fn(S) if top is None else fn(S, top, bottom)
         for s in SIZES:
-            if s == 512:
-                base.save(os.path.join(d, 'icon-%d.png' % s), 'PNG', optimize=True)
-            else:
-                finish(img, mask, s).save(os.path.join(d, 'icon-%d.png' % s), 'PNG', optimize=True)
-        print('%-6s %s' % (key, name))
+            finish(img, mask, s).save(os.path.join(d, 'icon-%d.png' % s), 'PNG', optimize=True)
+        del img, mask
+        gc.collect()
+        print('%-10s %s' % (key, name), flush=True)
     print('完成 →', OUT)
