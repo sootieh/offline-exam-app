@@ -217,23 +217,88 @@ def draw_check(S, top=(110, 114, 126), bottom=(34, 36, 44)):
     return img, mask
 
 
+# ---------- 白底系列（浅色壁纸也清晰：白底 + 彩色主体 + 浅灰描边） ----------
+WHITE_TOP, WHITE_BOT = (255, 255, 255), (233, 236, 241)
+
+
+def white_bordered(img, mask, S):
+    """白底图标加一圈浅灰描边"""
+    ring = ImageChops.subtract(mask, mask.filter(ImageFilter.MinFilter(5)))
+    edge = Image.new('RGBA', (S, S), (28, 32, 40, 52))
+    edge.putalpha(ImageChops.multiply(ring, Image.new('L', (S, S), 120)))
+    return Image.alpha_composite(img, edge)
+
+
+def draw_check_white(S):
+    img, mask = glass_base(S, WHITE_TOP, WHITE_BOT)
+    d = ImageDraw.Draw(img)
+    cx, cy = S * 0.5, S * 0.5
+    R = S * 0.29
+    ink = (36, 158, 106)
+    d.ellipse([cx - R, cy - R, cx + R, cy + R], outline=ink + (120,), width=max(2, int(S * 0.016)))
+    tw = max(3, int(S * 0.055))
+    pts = [(cx - R * 0.52, cy + R * 0.03), (cx - R * 0.14, cy + R * 0.42), (cx + R * 0.55, cy - R * 0.40)]
+    d.line(pts, fill=ink + (255,), width=tw, joint="curve")
+    for p in pts:
+        d.ellipse([p[0] - tw / 2, p[1] - tw / 2, p[0] + tw / 2, p[1] + tw / 2], fill=ink + (255,))
+    return white_bordered(img, mask, S), mask
+
+
+def draw_star_white(S):
+    img, mask = glass_base(S, WHITE_TOP, WHITE_BOT)
+    d = ImageDraw.Draw(img)
+    cx, cy = S * 0.5, S * 0.48
+    ink = (66, 132, 224)
+    for rr, aa in [(0.40, 22), (0.325, 34), (0.25, 52)]:
+        lay = layer(S)
+        ImageDraw.Draw(lay).ellipse([cx - S * rr, cy - S * rr, cx + S * rr, cy + S * rr], fill=ink + (aa,))
+        img = Image.alpha_composite(img, lay)
+    d = ImageDraw.Draw(img)
+    d.polygon(star_points(cx, cy, S * 0.245, S * 0.105, 5, -90), fill=ink + (255,))
+    for (sx, sy, ss) in [(0.735, 0.30, 0.062), (0.30, 0.755, 0.045)]:
+        d.polygon(star_points(S * sx, S * sy, S * ss, S * ss * 0.43, 5, -90), fill=ink + (200,))
+    return white_bordered(img, mask, S), mask
+
+
+def draw_medal_white(S):
+    img, mask = glass_base(S, WHITE_TOP, WHITE_BOT)
+    d = ImageDraw.Draw(img)
+    cx, cy = S * 0.5, S * 0.56
+    R = S * 0.235
+    gold, gold_l = (214, 152, 54), (238, 190, 104)
+    for sgn in (-1, 1):
+        d.polygon([(cx + sgn * S * 0.055, cy - R * 0.55),
+                   (cx + sgn * S * 0.235, cy - R * 1.55),
+                   (cx + sgn * S * 0.145, cy - R * 1.62),
+                   (cx + sgn * S * 0.028, cy - R * 0.62)], fill=gold + (225,))
+    d.ellipse([cx - R - S * 0.028, cy - R - S * 0.028 + S * 0.02, cx + R + S * 0.028, cy + R + S * 0.028 + S * 0.02],
+              fill=(120, 110, 90, 45))
+    d.ellipse([cx - R - S * 0.028, cy - R - S * 0.028, cx + R + S * 0.028, cy + R + S * 0.028], fill=gold_l + (255,))
+    d.ellipse([cx - R, cy - R, cx + R, cy + R], fill=gold + (255,))
+    d.ellipse([cx - R * 0.80, cy - R * 0.80, cx + R * 0.80, cy + R * 0.80],
+              outline=(255, 255, 255, 190), width=max(1, int(S * 0.008)))
+    d.polygon(star_points(cx, cy, R * 0.62, R * 0.27, 5, -90), fill=(255, 255, 255, 255))
+    return white_bordered(img, mask, S), mask
+
+
 # 品牌参考色
 WX = ((32, 200, 122), (8, 150, 82))      # 微信绿
 ZFB = ((74, 150, 255), (12, 96, 226))    # 支付宝蓝
 HA = ((96, 206, 248), (14, 150, 210))    # Home Assistant 天蓝
 
 VARIANTS = [
-    ('moss', '墨绿', draw_moss, None, None),
-    ('glyph', '考字', draw_glyph, None, None),
     ('check-wx', '极简绿', draw_check, *WX),
     ('check-zfb', '极简蓝', draw_check, *ZFB),
     ('check-ha', '极简天蓝', draw_check, *HA),
+    ('check-white', '极简白', draw_check_white, None, None),
     ('star-wx', '星辰绿', draw_star, *WX),
     ('star-zfb', '星辰蓝', draw_star, *ZFB),
     ('star-ha', '星辰天蓝', draw_star, *HA),
+    ('star-white', '星辰白', draw_star_white, None, None),
     ('medal-wx', '勋章绿', draw_medal, *WX),
     ('medal-zfb', '勋章蓝', draw_medal, *ZFB),
     ('medal-ha', '勋章天蓝', draw_medal, *HA),
+    ('medal-white', '勋章白', draw_medal_white, None, None)
 ]
 
 if __name__ == '__main__':

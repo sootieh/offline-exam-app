@@ -129,29 +129,31 @@
 
   /* ================= 应用图标 ================= */
   var ICON_VARIANTS = [
-    { key: 'moss',      name: '墨绿' },
-    { key: 'glyph',     name: '考字' },
-    { key: 'check-wx',  name: '极简绿' },
-    { key: 'check-zfb', name: '极简蓝' },
-    { key: 'check-ha',  name: '极简天蓝' },
-    { key: 'star-wx',   name: '星辰绿' },
-    { key: 'star-zfb',  name: '星辰蓝' },
-    { key: 'star-ha',   name: '星辰天蓝' },
-    { key: 'medal-wx',  name: '勋章绿' },
-    { key: 'medal-zfb', name: '勋章蓝' },
-    { key: 'medal-ha',  name: '勋章天蓝' }
+    { key: 'check-wx',    name: '极简绿' },
+    { key: 'check-zfb',   name: '极简蓝' },
+    { key: 'check-ha',    name: '极简天蓝' },
+    { key: 'check-white', name: '极简白' },
+    { key: 'star-wx',     name: '星辰绿' },
+    { key: 'star-zfb',    name: '星辰蓝' },
+    { key: 'star-ha',     name: '星辰天蓝' },
+    { key: 'star-white',  name: '星辰白' },
+    { key: 'medal-wx',    name: '勋章绿' },
+    { key: 'medal-zfb',   name: '勋章蓝' },
+    { key: 'medal-ha',    name: '勋章天蓝' },
+    { key: 'medal-white', name: '勋章白' }
   ];
+  var ICON_DEFAULT = 'check-wx';
   var ICON_KEY = 'examapp-icon';
   function currentIconKey() {
     var k = null;
     try { k = localStorage.getItem(ICON_KEY); } catch (e) {}
-    return ICON_VARIANTS.some(function (v) { return v.key === k; }) ? k : 'moss';
+    return ICON_VARIANTS.some(function (v) { return v.key === k; }) ? k : ICON_DEFAULT;
   }
   function applyIcon(key, save) {
     var v = ICON_VARIANTS.filter(function (x) { return x.key === key; })[0];
-    if (!v) key = 'moss';
+    if (!v) key = ICON_DEFAULT;
     // 带版本参数：绕过 iOS/HTTP 对旧 URL 的元数据缓存（曾导致主屏幕名称停在旧名）
-    var ver = '?v=130';
+    var ver = '?v=140';
     var man = document.querySelector('link[rel="manifest"]');
     if (man) man.href = 'manifest-' + key + '.webmanifest' + ver;
     var at = document.querySelector('link[rel="apple-touch-icon"]');

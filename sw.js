@@ -1,9 +1,9 @@
 /* 离线缓存：首次打开后即可断网使用 */
-var CACHE = 'examapp-v13';
-var ICON_VARIANTS = ['moss', 'glyph',
-  'check-wx', 'check-zfb', 'check-ha',
-  'star-wx', 'star-zfb', 'star-ha',
-  'medal-wx', 'medal-zfb', 'medal-ha'];
+var CACHE = 'examapp-v14';
+var ICON_VARIANTS = [
+  'check-wx', 'check-zfb', 'check-ha', 'check-white',
+  'star-wx', 'star-zfb', 'star-ha', 'star-white',
+  'medal-wx', 'medal-zfb', 'medal-ha', 'medal-white'];
 var ASSETS = [
   './',
   './index.html',
