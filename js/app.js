@@ -202,7 +202,6 @@
     sel: {
       pracBank: null, pracScope: 'all', pracOrder: 'seq', pracLimit: '0', pracTypes: [],
       homeBank: null,
-      browseBank: null, browseTypes: [], browseIdx: 0, browseAll: null,
       wrongBank: null,
       examBank: null, examTime: '60', examSrc: 'all', examTypes: {}
     },
@@ -215,7 +214,7 @@
   };
 
   /* ================= 路由 ================= */
-  var TABS = ['page-banks', 'page-browse', 'page-practice', 'page-wrong', 'page-settings'];
+  var TABS = ['page-banks', 'page-practice', 'page-wrong', 'page-settings'];
   App.go = function (id) {
     if (id === 'page-banks') App.stack = [];
     var cur = document.querySelector('.page.active');
@@ -231,7 +230,6 @@
     var nv = pg && pg.querySelector('.nav'); if (nv) nv.classList.remove('mini');
     if (id === 'page-banks') renderBanks();
     if (id === 'page-practice') renderPractice();
-    if (id === 'page-browse') renderBrowse();
     if (id === 'page-wrong') renderWrong();
     if (id === 'page-exam') renderExam();
     if (id === 'page-stats') renderStats();
@@ -423,12 +421,7 @@
   function setGlobalBank(bid) {
     App.sel.homeBank = bid;
     App.sel.pracBank = bid;
-    App.sel.browseBank = bid;
     App.sel.wrongBank = bid;
-    App.sel.browseIdx = 0;
-    App.sel.browseTypes = [];
-    App.browseAll = null;
-    App.browseList = [];
   }
   function curBankName() {
     var b = App.banks.filter(function (x) { return x.id === App.sel.homeBank; })[0];
@@ -436,38 +429,11 @@
   }
   function paintCurBank() {
     var n = curBankName();
-    ['cur-bank-prac', 'cur-bank-browse', 'cur-bank-wrong'].forEach(function (id) {
+    ['cur-bank-prac', 'cur-bank-wrong'].forEach(function (id) {
       var e = $(id); if (e) e.textContent = n;
     });
   }
 
-  /* 浏览进度快照：记住看到第几题与题型筛选 */
-  var BROWSE_KEY = 'examapp-browse';
-  function saveBrowse() {
-    if (!App.sel.browseBank) return;
-    try {
-      localStorage.setItem(BROWSE_KEY, JSON.stringify({
-        bankId: App.sel.browseBank,
-        types: (App.sel.browseTypes || []).slice(),
-        idx: App.sel.browseIdx || 0,
-        savedAt: Date.now()
-      }));
-    } catch (e) { }
-  }
-  function readBrowse() {
-    try { return JSON.parse(localStorage.getItem(BROWSE_KEY) || 'null'); } catch (e) { return null; }
-  }
-  function clearBrowse() {
-    try { localStorage.removeItem(BROWSE_KEY); } catch (e) { }
-  }
-  function renderBrowseResume() {
-    var snap = readBrowse();
-    var card = $('browse-resume');
-    var ok = snap && snap.bankId === App.sel.browseBank && (snap.idx || 0) > 0;
-    card.hidden = !ok;
-    if (!ok) return;
-    $('browse-resume-sub').textContent = '上次看到第 ' + ((snap.idx || 0) + 1) + ' 题';
-  }
   function renderPracResume() {
     var snap = Quiz.readSession ? Quiz.readSession() : null;
     var card = $('prac-resume');
@@ -546,219 +512,6 @@
   }
 
   /* ================= 浏览（逐题卡片） ================= */
-  function renderBrowse() {
-    if (!App.banks.length) { $('browse-body').hidden = true; $('browse-empty').hidden = false; return; }
-    $('browse-body').hidden = false; $('browse-empty').hidden = true;
-    if (!App.sel.browseBank || !App.banks.some(function (b) { return b.id === App.sel.browseBank; })) {
-      App.sel.browseBank = App.banks[0].id;
-    }
-    App.sel.browseBank = App.sel.homeBank;
-    paintCurBank();
-    renderBrowseResume();
-    renderBrowseTypes();
-  }
-
-  function renderBrowseTypes() {
-    var bid = App.sel.browseBank;
-    DB.getQuestions(bid).then(function (all) {
-      App.browseAll = all;
-      var types = {};
-      all.forEach(function (q) { types[q.type] = (types[q.type] || 0) + 1; });
-      var keys = Parser.TYPES.filter(function (t) { return types[t]; });
-      var sel = (App.sel.browseTypes || []).filter(function (t) { return types[t]; });
-      App.sel.browseTypes = sel;
-      var wrap = $('browse-types');
-      wrap.innerHTML = '<button class="chip' + (sel.length ? '' : ' on') + '" data-t="all">全部</button>' +
-        keys.map(function (t) {
-          return '<button class="chip' + (sel.indexOf(t) >= 0 ? ' on' : '') + '" data-t="' + t + '">' +
-            Parser.typeName(t) + '（' + types[t] + '）</button>';
-        }).join('');
-      bindChips(wrap, 'data-t', function (v) {
-        var cur = App.sel.browseTypes || [];
-        if (v === 'all') App.sel.browseTypes = [];
-        else {
-          var i = cur.indexOf(v);
-          if (i >= 0) cur.splice(i, 1); else cur.push(v);
-          App.sel.browseTypes = cur;
-        }
-        App.sel.browseIdx = 0;
-        renderBrowseTypes();
-      });
-      updateBrowseSummary();
-    });
-  }
-
-  /* 配置页：显示「将浏览多少道题」 */
-  function browseFiltered() {
-    return App.browseAll ? App.browseAll.filter(function (q) {
-      var sel = App.sel.browseTypes || [];
-      return !sel.length || sel.indexOf(q.type) >= 0;
-    }) : [];
-  }
-  function updateBrowseSummary() {
-    var qs = browseFiltered();
-    var names = (App.sel.browseTypes || []).map(function (t) { return Parser.typeName(t); });
-    $('browse-summary').textContent = '共 ' + qs.length + ' 道题' +
-      (names.length ? '（' + names.join('、') + '）' : '（全部题型）');
-    $('btn-start-browse').disabled = !qs.length;
-    $('btn-start-browse').style.opacity = qs.length ? '' : '.5';
-  }
-
-  /* 开始浏览：进入全屏浏览页（与刷题一致的两段式操作） */
-  function startBrowse(reset) {
-    var qs = browseFiltered();
-    if (!qs.length) { App.toast('当前题型下没有题目'); return; }
-    if (reset) App.sel.browseIdx = 0;
-    App.sel.browseIdx = Math.min(App.sel.browseIdx, Math.max(0, qs.length - 1));
-    App.go('page-browse-run');
-    renderBrowseQ();
-  }
-
-  function renderBrowseQ() {
-    var qs = App.browseAll ? App.browseAll.filter(function (q) {
-      var sel = App.sel.browseTypes || [];
-      return !sel.length || sel.indexOf(q.type) >= 0;
-    }) : [];
-    App.browseList = qs;
-    var i = App.sel.browseIdx = Math.min(App.sel.browseIdx, Math.max(0, qs.length - 1));
-    $('bz-pos').textContent = (qs.length ? i + 1 : 0) + ' / ' + qs.length;
-    $('bz-bar').style.width = (qs.length ? Math.round((i + 1) / qs.length * 100) : 0) + '%';
-    if (!qs.length) {
-      $('bz-type').textContent = '—';
-      $('bz-stem').textContent = '当前题型下没有题目';
-      $('bz-opts').innerHTML = '';
-      $('bz-ans').hidden = true; $('bz-exp').hidden = true;
-      $('bz-master').disabled = true; $('bz-fav').disabled = true; $('bz-edit').disabled = true;
-      return;
-    }
-    $('bz-master').disabled = false; $('bz-fav').disabled = false; $('bz-edit').disabled = false;
-    var q = qs[i], bid = App.sel.browseBank;
-    var te = $('bz-type');
-    te.textContent = Parser.typeName(q.type);
-    te.className = 'qz-type ' + q.type;
-    $('bz-stem').textContent = q.stem;
-    // 与刷题页完全相同的选项样式（.opt），正确项标 .right
-    $('bz-opts').innerHTML = (q.options || []).map(function (o) {
-      var right = q.answer.indexOf(o.key) >= 0;
-      return '<div class="opt' + (right ? ' right' : '') + '">' +
-        '<span class="k' + (q.type === 'multiple' ? ' multi' : '') + '">' + esc(o.key) + '</span>' +
-        '<span>' + esc(o.text) + '</span></div>';
-    }).join('');
-    var ansTxt = q.type === 'fill' ? q.answer.join(' / ') : q.answer.map(function (k) {
-      var o = (q.options || []).filter(function (x) { return x.key === k; })[0];
-      return k + (o ? '. ' + o.text : '');
-    }).join('　');
-    $('bz-ans').hidden = false;
-    $('bz-ans').innerHTML = '<b>正确答案：' + esc(ansTxt) + '</b>';
-    $('bz-exp').hidden = !q.explanation;
-    $('bz-exp').innerHTML = q.explanation ? '<span class="lb">解析</span>' + esc(q.explanation) : '';
-    var fav = App.isFav(bid, q.id);
-    $('bz-fav').textContent = fav ? '★ 已收藏' : '☆ 收藏';
-    $('bz-fav').classList.toggle('on', fav);
-    var mst = App.isMastered(bid, q.id);
-    $('bz-master').textContent = mst ? '✓ 已掌握' : '✓ 记住了';
-    $('bz-master').classList.toggle('on', mst);
-    saveBrowse();
-  }
-
-  function browseNav(dir) {
-    var qs = App.browseList || [];
-    var i = App.sel.browseIdx + dir;
-    if (i < 0) { App.toast('已经是第一题'); return; }
-    if (i >= qs.length) { App.toast('已经是最后一题'); return; }
-    App.sel.browseIdx = i;
-    renderBrowseQ();
-  }
-
-  /* ================= 错题页 ================= */
-  function renderWrong() {
-    if (!App.banks.length) { $('wrong-body').hidden = true; $('wrong-empty').hidden = false; return; }
-    $('wrong-body').hidden = false; $('wrong-empty').hidden = true;
-    App.sel.wrongBank = App.sel.homeBank;
-    paintCurBank();
-    renderWrongList();
-  }
-
-  function wrongCountOf(bid) {
-    var rec = App.records[bid] || {};
-    var n = 0;
-    Object.keys(rec).forEach(function (k) {
-      if ((rec[k].wrong || 0) > 0 && !rec[k].mastered) n++;
-    });
-    return n;
-  }
-
-  function renderWrongList() {
-    var bid = App.sel.wrongBank;
-    DB.getQuestions(bid).then(function (all) {
-      var wrongs = filterQs(all, bid, 'wrong');
-      var btn = $('btn-redo-wrong');
-      btn.textContent = wrongs.length ? '重做这 ' + wrongs.length + ' 道错题' : '该题库暂无错题';
-      btn.disabled = !wrongs.length;
-      btn.style.opacity = wrongs.length ? 1 : .5;
-      var rec = App.records[bid] || {};
-      $('wrong-list').innerHTML = wrongs.map(function (q, i) {
-        var r = rec[q.id] || {};
-        var ansTxt = q.type === 'fill' ? q.answer.join(' / ') : q.answer.map(function (k) {
-          var o = (q.options || []).filter(function (x) { return x.key === k; })[0];
-          return k + (o ? '. ' + o.text : '');
-        }).join('　');
-        return '<div class="wrong-item" data-i="' + i + '">' +
-          '<div class="wi-stem">' + (i + 1) + '. ' + esc(q.stem) + '</div>' +
-          '<div class="wi-ans">正确答案：' + esc(ansTxt) + '</div>' +
-          '<div class="wi-sub">做错 ' + (r.wrong || 0) + ' 次 · 已练 ' + (r.seen || 0) + ' 次 · 点按展开解析</div>' +
-          '<div class="wi-exp">' + esc(q.explanation || '（无解析）') + '</div></div>';
-      }).join('') || '<p class="hint">该题库暂无错题</p>';
-      Array.prototype.forEach.call($('wrong-list').children, function (c) {
-        if (!c.classList.contains('wrong-item')) return;
-        c.onclick = function () { c.classList.toggle('open'); };
-      });
-    });
-  }
-
-  /* 浏览页滑动手势（遵循设置里的两个滑动开关） */
-  function bindBrowseSwipe() {
-    var area = $('bz-body');
-    if (!area || !area.addEventListener) return;
-    var sx = 0, sy = 0, axis = null, mode = null, scrollY = false;
-    function reset() { axis = null; mode = null; }
-    area.addEventListener('touchstart', function (e) {
-      if (!e.touches || e.touches.length !== 1) return;
-      sx = e.touches[0].clientX; sy = e.touches[0].clientY;
-      reset();
-      scrollY = area.scrollHeight > area.clientHeight + 4;
-    }, { passive: true });
-    area.addEventListener('touchmove', function (e) {
-      if (mode || !e.touches || !e.touches.length) return;
-      var dx = e.touches[0].clientX - sx, dy = e.touches[0].clientY - sy;
-      var ax = Math.abs(dx), ay = Math.abs(dy);
-      if (ax < 14 && ay < 14) return;
-      if (!axis) {
-        if (ax > ay * 1.3) axis = 'h';
-        else if (ay > ax * 1.3) axis = 'v';
-        else return;
-      }
-      if (axis === 'v' && scrollY) {                    // 还能滚动 → 让给原生滚动
-        var atTop = area.scrollTop <= 0;
-        var atBottom = area.scrollTop >= area.scrollHeight - area.clientHeight - 1;
-        if ((dy > 0 && !atTop) || (dy < 0 && !atBottom)) { mode = 'scroll'; return; }
-      }
-      if (axis === 'h' && e.preventDefault) e.preventDefault();
-      mode = 'swipe';
-    }, { passive: false });
-    area.addEventListener('touchend', function (e) {
-      if (mode !== 'swipe' || !axis || !e.changedTouches || !e.changedTouches.length) return;
-      var t = e.changedTouches[0];
-      var dx = t.clientX - sx, dy = t.clientY - sy, TH = 64;
-      if (axis === 'h' && App.getPref && App.getPref('swipeH')) {
-        if (dx <= -TH) browseNav(1); else if (dx >= TH) browseNav(-1);
-      } else if (axis === 'v' && App.getPref && App.getPref('swipeV')) {
-        if (dy <= -TH) browseNav(1); else if (dy >= TH) browseNav(-1);
-      }
-      reset();
-    });
-  }
-
   function renderPractice() {
     if (!App.banks.length) { $('prac-body').hidden = true; $('prac-empty').hidden = false; return; }
     $('prac-body').hidden = false; $('prac-empty').hidden = true;
@@ -1344,28 +1097,9 @@
       $('prac-resume').hidden = true;
       startPractice('practice');
     };
-    $('browse-resume-go').onclick = function () {
-      var snap = readBrowse();
-      if (!snap || snap.bankId !== App.sel.browseBank) { renderBrowseResume(); return; }
-      App.sel.browseTypes = (snap.types || []).slice();
-      App.sel.browseIdx = snap.idx || 0;
-      renderBrowseTypes();
-      startBrowse(false);
-    };
-    $('browse-resume-restart').onclick = function () {
-      clearBrowse();
-      App.sel.browseIdx = 0;
-      $('browse-resume').hidden = true;
-      renderBrowseTypes();
-      startBrowse(true);
-    };
     $('btn-home-prac').onclick = function () {
       App.sel.pracBank = App.sel.homeBank; App.sel.pracScope = 'all';
       App.go('page-practice');
-    };
-    $('btn-home-browse').onclick = function () {
-      App.sel.browseBank = App.sel.homeBank; App.sel.browseTypes = []; App.sel.browseIdx = 0;
-      App.go('page-browse');
     };
     $('btn-home-random').onclick = function () {
       App.sel.pracBank = App.sel.homeBank; App.sel.pracScope = 'all';
@@ -1429,50 +1163,6 @@
       download('题库模板.csv', Parser.TPL_CSV, 'text/csv;charset=utf-8');
       App.toast('已下载 CSV 模板，可用 Excel 打开编辑');
     };
-
-    // 浏览
-    $('btn-start-browse').onclick = function () { startBrowse(false); };
-    $('bz-back').onclick = function () { App.go('page-browse'); };
-    $('bz-prev').onclick = function () { browseNav(-1); };
-    $('bz-next').onclick = function () { browseNav(1); };
-    $('bz-master').onclick = function () {
-      var q = (App.browseList || [])[App.sel.browseIdx];
-      if (!q) return;
-      App.toggleMastered(App.sel.browseBank, q.id).then(renderBrowseQ);
-    };
-    $('bz-fav').onclick = function () {
-      var q = (App.browseList || [])[App.sel.browseIdx];
-      if (!q) return;
-      App.toggleFav(App.sel.browseBank, q.id).then(renderBrowseQ);
-    };
-    $('bz-edit').onclick = function () {
-      var q = (App.browseList || [])[App.sel.browseIdx];
-      if (!q) return;
-      openEdit(q.id, App.browseList, function () {
-        renderBrowseTypes();
-        renderBrowseQ();
-      });
-    };
-    $('bz-card').onclick = function () {
-      var qs = App.browseList || [];
-      $('br-jump-grid').innerHTML = qs.map(function (q, i) {
-        var mst = App.isMastered(App.sel.browseBank, q.id);
-        return '<button class="qn' + (i === App.sel.browseIdx ? ' cur' : '') + (mst ? ' right' : '') +
-          '" data-i="' + i + '">' + (i + 1) + '</button>';
-      }).join('') || '';
-      $('br-jump-hint').textContent = '共 ' + qs.length + ' 题';
-      $('br-jump-mask').hidden = false;
-      Array.prototype.forEach.call($('br-jump-grid').children, function (b) {
-        b.onclick = function () {
-          App.sel.browseIdx = +b.getAttribute('data-i');
-          $('br-jump-mask').hidden = true;
-          renderBrowseQ();
-        };
-      });
-    };
-    $('br-jump-close').onclick = function () { $('br-jump-mask').hidden = true; };
-    $('br-jump-mask').onclick = function (e) { if (e.target === $('br-jump-mask')) $('br-jump-mask').hidden = true; };
-    bindBrowseSwipe();
 
     // 错题
     $('btn-redo-wrong').onclick = function () {

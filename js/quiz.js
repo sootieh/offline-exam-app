@@ -14,7 +14,8 @@
   var el = {};
   function cache() {
     ['qz-back', 'qz-bar', 'qz-pos', 'qz-card', 'qz-type', 'qz-timer', 'qz-stem', 'qz-opts',
-      'qz-fillwrap', 'qz-fill', 'qz-answer', 'qz-exp', 'qz-prev', 'qz-fav', 'qz-main', 'qz-next',
+      'qz-fillwrap', 'qz-fill', 'qz-ansblock', 'qz-ans-toggle', 'qz-ans-body', 'qz-mine',
+      'qz-right', 'qz-exp2', 'qz-prev', 'qz-fav', 'qz-main', 'qz-next',
       'qz-body', 'card-mask', 'sh-grid', 'sh-close', 'sh-hint'].forEach(function (k) { el[k] = $(k); });
   }
 
@@ -104,26 +105,27 @@
       el['qz-fill'].disabled = st.done && S.mode !== 'recite';
     }
 
-    // 答案 / 解析
-    var showAns = (S.mode === 'recite') || (st.done && S.mode === 'practice');
-    el['qz-answer'].hidden = !showAns;
-    el['qz-exp'].hidden = !(showAns && q.explanation);
-    if (showAns) {
-      var ansTxt = q.type === 'fill'
-        ? q.answer.join(' / ')
-        : q.answer.map(function (k) {
-          var o = q.options.filter(function (x) { return x.key === k; })[0];
-          return k + (o ? '. ' + o.text : '');
-        }).join('   ');
-      var head = S.mode === 'recite' ? '正确答案：'
-        : (st.ok ? '回答正确' : (st.partial ? '漏选（多选需全对）' : '回答错误'));
-      el['qz-answer'].className = 'qz-answer' + (st.ok || S.mode === 'recite' ? '' : ' bad');
-      el['qz-answer'].innerHTML = '<b>' + esc(head) + '</b>' +
-        '<div style="margin-top:4px">' + esc(ansTxt) + '</div>' +
-        (q.type !== 'fill' && st.v ? '<div style="margin-top:4px;opacity:.75">你的作答：' +
-          esc((Array.isArray(st.v) ? st.v.join('') : st.v) || '未作答') + '</div>' : '');
-      if (q.explanation) {
-        el['qz-exp'].innerHTML = '<span class="lb">解析</span>' + esc(q.explanation);
+    // 答案解析折叠块（取代浏览：默认折叠，可展开看我的答案 / 正确答案 / 参考解析）
+    if (S.mode === 'exam') {
+      el['qz-ansblock'].hidden = true;      // 考试不显示答案
+    } else {
+      el['qz-ansblock'].hidden = false;
+      el['qz-ans-toggle'].classList.toggle('open', !!S.expOpen);
+      el['qz-ans-body'].hidden = !S.expOpen;
+      if (S.expOpen) {
+        var mine = '—';
+        if (Array.isArray(st.v) && st.v.length) mine = q.type === 'fill' ? st.v.join(' / ') : st.v.join('、');
+        else if (typeof st.v === 'string' && st.v) mine = st.v;
+        el['qz-mine'].textContent = mine;
+        el['qz-mine'].className = st.done ? (st.ok ? 'ok' : (st.partial ? 'part' : 'bad')) : '';
+        var ansTxt2 = q.type === 'fill'
+          ? q.answer.join(' / ')
+          : q.answer.map(function (k) {
+            var o = (q.options || []).filter(function (x) { return x.key === k; })[0];
+            return k + (o ? '. ' + o.text : '');
+          }).join('　');
+        el['qz-right'].textContent = ansTxt2 || '—';
+        el['qz-exp2'].textContent = q.explanation || '暂无答案解析';
       }
     }
 
@@ -217,6 +219,7 @@
     var r = Parser.check(q, q.type === 'fill' ? st.v : st.v);
     st.ok = r.ok; st.partial = r.partial; st.done = true;
     saveRecord(q, st, true);
+    S.expOpen = true;   // 判分后自动展开答案解析
     render();
   }
 
@@ -287,7 +290,7 @@
         mode: 'practice', bankId: snap.bankId, title: snap.title || '',
         qs: qs, duration: 0,
         i: Math.min(snap.i || 0, qs.length - 1),
-        answers: {}, startAt: Date.now(), endAt: 0
+        answers: {}, startAt: Date.now(), endAt: 0, expOpen: false
       };
       S.states = qs.map(function (q, i) {
         var sa = (snap.states || [])[i] || {};
@@ -439,6 +442,11 @@
       if (!S) return;
       var st = S.states[S.i];
       if (!st.done) st.v = e.target.value;
+    };
+    el['qz-ans-toggle'].onclick = function () {
+      if (!S || S.mode === 'exam') return;
+      S.expOpen = !S.expOpen;
+      render();
     };
     bindSwipe();
   }

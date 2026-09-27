@@ -52,8 +52,7 @@
         </div>
         <div class="home-actions">
           <button class="btn-home primary" id="btn-home-prac"><svg class="ico" viewBox="0 0 24 24"><path d="M8 5.5l10 6.5-10 6.5z"/></svg>开始刷题</button>
-          <button class="btn-home ghost" id="btn-home-browse"><svg class="ico" viewBox="0 0 24 24"><path d="M12 6.6C10.4 5.2 8.3 4.4 6 4.4c-1 0-2 .15-2.9.45v13.9c.9-.3 1.9-.45 2.9-.45 2.3 0 4.4.8 6 2.2 1.6-1.4 3.7-2.2 6-2.2 1 0 2 .15 2.9.45V4.85c-.9-.3-1.9-.45-2.9-.45-2.3 0-4.4.8-6 2.2z"/><path d="M12 6.6v13.9"/></svg>开始浏览</button>
-          <button class="btn-home ghost" id="btn-home-random"><svg class="ico" viewBox="0 0 24 24"><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7.2 18.8 3 20l1.2-4.2z"/><path d="M14.7 5.3l3.4 3.4"/></svg>随机练习</button>
+                <button class="btn-home ghost" id="btn-home-random"><svg class="ico" viewBox="0 0 24 24"><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7.2 18.8 3 20l1.2-4.2z"/><path d="M14.7 5.3l3.4 3.4"/></svg>随机练习</button>
           <button class="btn-home ghost" id="btn-home-exam"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.6"/><path d="M12 9.1V13l2.9 1.7"/><path d="M9.4 2.6h5.2"/></svg>模拟考试</button>
         </div>
         <div class="stat-grid">
@@ -255,48 +254,6 @@ D. 管制
     </div>
   </section>
 
-  <!-- ============ 浏览（原背题模式，独立标签页） ============ -->
-  <section id="page-browse" class="page">
-    <header class="nav">
-      <h1 class="nav-t">浏览</h1>
-      <span></span>
-    </header>
-    <div class="scroll">
-      <div class="lg-title">浏览</div>
-      <div id="browse-empty" class="empty" hidden>
-        <svg class="empty-ico" viewBox="0 0 24 24"><path d="M12 6.6C10.4 5.2 8.3 4.4 6 4.4c-1 0-2 .15-2.9.45v13.9c.9-.3 1.9-.45 2.9-.45 2.3 0 4.4.8 6 2.2 1.6-1.4 3.7-2.2 6-2.2 1 0 2 .15 2.9.45V4.85c-.9-.3-1.9-.45-2.9-.45-2.3 0-4.4.8-6 2.2z"/><path d="M12 6.6v13.9"/></svg>
-        <p>先导入题库再来浏览</p>
-        <button class="btn primary" data-goto="page-import">去导入</button>
-      </div>
-      <div id="browse-body">
-        <div class="cur-bank">当前题库：<b id="cur-bank-browse"></b><button class="cb-link" data-goto="page-banks">切换 ›</button></div>
-        <div class="resume-card" id="browse-resume" hidden>
-          <div class="rc-ico"><svg class="ico" viewBox="0 0 24 24"><path d="M12 6.6C10.4 5.2 8.3 4.4 6 4.4c-1 0-2 .15-2.9.45v13.9c.9-.3 1.9-.45 2.9-.45 2.3 0 4.4.8 6 2.2 1.6-1.4 3.7-2.2 6-2.2 1 0 2 .15 2.9.45V4.85c-.9-.3-1.9-.45-2.9-.45-2.3 0-4.4.8-6 2.2z"/><path d="M12 6.6v13.9"/></svg></div>
-          <div class="rc-txt"><div class="rc-t">上次浏览进度</div><div class="rc-s" id="browse-resume-sub"></div></div>
-          <button class="rc-go" id="browse-resume-go">继续</button>
-          <button class="rc-restart" id="browse-resume-restart">重新开始</button>
-        </div>
-        <div class="block">
-          <div class="blk-title">题型</div>
-          <div id="browse-types" class="chip-wrap"></div>
-          <p class="hint">可多选；一项都不选时浏览全部题型。</p>
-        </div>
-        <div class="block">
-          <div class="blk-title">浏览范围</div>
-          <p class="hint" id="browse-summary">共 0 道题</p>
-        </div>
-        <button class="btn primary big" id="btn-start-browse">开始浏览</button>
-        <div class="pad"></div>
-      </div>
-    </div>
-    <div class="mask" id="br-jump-mask" hidden>
-      <div class="sheet">
-        <div class="sh-head">跳转到 <span class="sh-hint" id="br-jump-hint"></span><button class="sh-close" id="br-jump-close">关闭</button></div>
-        <div class="sh-grid" id="br-jump-grid"></div>
-      </div>
-    </div>
-  </section>
-
   <!-- ============ 错题 ============ -->
   <section id="page-wrong" class="page">
     <header class="nav"><h1 class="nav-t">错题</h1><span></span></header>
@@ -441,36 +398,11 @@ D. 管制
         <div class="blk-title">关于</div>
         <div class="tip">
           <p>纯本地运行，所有数据存在你的手机浏览器里，不上传任何服务器。</p>
-          <p>版本号 1.9.0 · 离线可用 · 支持深色模式</p>
+          <p>版本号 1.10.0 · 离线可用 · 支持深色模式</p>
         </div>
       </div>
       <div class="pad"></div>
     </div>
-  </section>
-
-  <!-- ============ 浏览（全屏，与答题页同构） ============ -->
-  <section id="page-browse-run" class="page quiz">
-    <header class="qz-top">
-      <button class="qz-btn" id="bz-back">退出</button>
-      <div class="qz-prog"><div class="qz-bar"><i id="bz-bar"></i></div><span id="bz-pos">0/0</span></div>
-      <button class="qz-btn" id="bz-card">题卡</button>
-    </header>
-    <div class="qz-body" id="bz-body">
-      <div class="qz-meta">
-        <span class="qz-type" id="bz-type">单选题</span>
-        <button class="br-master-btn" id="bz-master">✓ 记住了</button>
-      </div>
-      <div class="qz-stem" id="bz-stem"></div>
-      <div class="qz-opts" id="bz-opts"></div>
-      <div class="qz-answer" id="bz-ans" hidden></div>
-      <div class="qz-exp" id="bz-exp" hidden></div>
-    </div>
-    <footer class="qz-bottom">
-      <button class="qz-act" id="bz-prev">上一题</button>
-      <button class="qz-act" id="bz-edit">✎ 修改</button>
-      <button class="qz-act fav" id="bz-fav">☆ 收藏</button>
-      <button class="qz-act primary" id="bz-next">下一题</button>
-    </footer>
   </section>
 
   <!-- ============ 答题器（全屏） ============ -->
@@ -490,8 +422,14 @@ D. 管制
       <div class="qz-fill" id="qz-fillwrap" hidden>
         <input class="input" id="qz-fill" placeholder="请输入答案" autocomplete="off">
       </div>
-      <div class="qz-answer" id="qz-answer" hidden></div>
-      <div class="qz-exp" id="qz-exp" hidden></div>
+      <div class="ans-block" id="qz-ansblock" hidden>
+        <button class="ans-toggle" id="qz-ans-toggle">答案解析<svg class="chev" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5"/></svg></button>
+        <div class="ans-body" id="qz-ans-body" hidden>
+          <div class="ans-row">我的答案：<b id="qz-mine">—</b></div>
+          <div class="ans-row">正确答案：<b id="qz-right">—</b></div>
+          <div class="ans-row">参考解析：<span id="qz-exp2">暂无答案解析</span></div>
+        </div>
+      </div>
     </div>
     <footer class="qz-bottom">
       <button class="qz-act" id="qz-prev">上一题</button>
@@ -575,7 +513,6 @@ D. 管制
   <!-- 底部导航 -->
   <nav class="tabbar" id="tabbar">
     <button class="tab active" data-tab="page-banks"><svg class="ico" viewBox="0 0 24 24"><path d="M3.8 5.2h16.4a1.4 1.4 0 0 1 1.4 1.4v3.2a1.4 1.4 0 0 1-1.4 1.4H3.8a1.4 1.4 0 0 1-1.4-1.4V6.6a1.4 1.4 0 0 1 1.4-1.4z"/><path d="M4.6 11.2V18a2 2 0 0 0 2 2h10.8a2 2 0 0 0 2-2v-6.8"/><path d="M9.6 14.6h4.8"/></svg>题库</button>
-    <button class="tab" data-tab="page-browse"><svg class="ico" viewBox="0 0 24 24"><path d="M12 6.6C10.4 5.2 8.3 4.4 6 4.4c-1 0-2 .15-2.9.45v13.9c.9-.3 1.9-.45 2.9-.45 2.3 0 4.4.8 6 2.2 1.6-1.4 3.7-2.2 6-2.2 1 0 2 .15 2.9.45V4.85c-.9-.3-1.9-.45-2.9-.45-2.3 0-4.4.8-6 2.2z"/><path d="M12 6.6v13.9"/></svg>浏览</button>
     <button class="tab" data-tab="page-practice"><svg class="ico" viewBox="0 0 24 24"><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7.2 18.8 3 20l1.2-4.2z"/><path d="M14.7 5.3l3.4 3.4"/></svg>刷题</button>
     <button class="tab" data-tab="page-wrong"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="M12 7.6v5.4"/><path d="M12 16.3h.01"/></svg>错题</button>
     <button class="tab" data-tab="page-settings"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.1"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.09a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.09a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></svg>设置</button>

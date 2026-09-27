@@ -364,6 +364,21 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
 .qz-exp{margin-top:10px;padding:14px 16px;border-radius:14px;background:var(--fill);font-size:14px;
   color:var(--txt2);line-height:1.75;white-space:pre-wrap}
 .qz-exp .lb{font-weight:600;color:var(--brand);margin-right:4px}
+
+/* ---------------- 答案解析折叠块（刷题模式） ---------------- */
+.ans-block{margin-top:16px;background:var(--fill);border-radius:14px;overflow:hidden}
+.ans-toggle{display:flex;align-items:center;gap:4px;width:100%;padding:14px 16px;background:none;
+  border:none;font-size:15px;font-weight:600;color:var(--brand);cursor:pointer;text-align:left}
+.ans-toggle .chev{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round;transition:transform .2s;margin-top:1px}
+.ans-toggle.open .chev{transform:rotate(180deg)}
+.ans-toggle:active{opacity:.6}
+.ans-body{padding:2px 16px 14px;display:flex;flex-direction:column;gap:8px;
+  font-size:14.5px;line-height:1.6;color:var(--txt2)}
+.ans-row b{color:var(--txt);font-weight:600}
+.ans-row b.ok{color:var(--green)}
+.ans-row b.bad{color:var(--red)}
+.ans-row b.part{color:var(--orange)}
 .qz-bottom{display:flex;gap:8px;padding:10px 12px calc(env(safe-area-inset-bottom) + 10px);
   border-top:var(--hair);flex:0 0 auto;background:var(--bg)}
 .qz-act{flex:1;padding:12px 4px;border-radius:13px;background:var(--fill);font-size:15px;
@@ -610,10 +625,6 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
 .pr-bar i{display:block;height:100%;border-radius:4px;background:var(--brand-d);transition:width .3s}
 
 /* ---------------- 浏览页（与刷题页同一套视觉：复用 qz-* 样式类） ---------------- */
-.br-master-btn{margin-left:auto;background:none;border:none;font-size:13px;font-weight:600;
-  color:var(--txt2);padding:5px 2px;cursor:pointer;display:flex;align-items:center;gap:3px}
-.br-master-btn:active{opacity:.5}
-.br-master-btn.on{color:var(--green)}
 
 /* ---------------- 错题页 ---------------- */
 .wrong-item{background:var(--card-solid);border-radius:var(--r);padding:14px 16px;margin-bottom:10px;
