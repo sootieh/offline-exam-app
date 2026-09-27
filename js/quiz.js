@@ -150,10 +150,13 @@
     var fav = App.isFav(S.bankId, q.id);
     el['qz-fav'].textContent = fav ? '★ 已收藏' : '☆ 收藏';
     el['qz-fav'].className = 'qz-act fav' + (fav ? ' on' : '');
+
+    if (S.mode === 'practice') saveSession();
   }
 
   /* ---------------- 作答 ---------------- */
   function pick(k) {
+    if (!S) return;
     var q = S.qs[S.i], st = S.states[S.i];
     if (st.done && S.mode !== 'recite') return;
     if (S.mode === 'recite') return;
@@ -202,6 +205,7 @@
   }
 
   function submitCurrent() {
+    if (!S) return;
     var q = S.qs[S.i], st = S.states[S.i];
     if (st.done) return;
     if (q.type === 'fill') {
@@ -234,6 +238,69 @@
     el['card-mask'].hidden = false;
   }
 
+  /* ---------------- 练习续作（会话快照） ---------------- */
+  var SESS_KEY = 'examapp-session';
+  function saveSession() {
+    if (!S || S.mode !== 'practice') return;
+    try {
+      localStorage.setItem(SESS_KEY, JSON.stringify({
+        bankId: S.bankId, title: S.title, i: S.i, total: S.qs.length,
+        qids: S.qs.map(function (q) { return q.id; }),
+        states: S.states.map(function (st) { return { v: st.v, done: st.done, ok: st.ok, partial: st.partial }; }),
+        answered: S.states.filter(function (st) { return st.done || (st.v && (Array.isArray(st.v) ? st.v.length : st.v)); }).length,
+        scope: (App.sel && App.sel.pracScope) || 'all',
+        types: ((App.sel && App.sel.pracTypes) || []).slice(),
+        order: (App.sel && App.sel.pracOrder) || 'seq',
+        limit: (App.sel && App.sel.pracLimit) || '0',
+        savedAt: Date.now()
+      }));
+    } catch (e) { }
+  }
+  function readSession() {
+    try { return JSON.parse(localStorage.getItem(SESS_KEY) || 'null'); } catch (e) { return null; }
+  }
+  function clearSession() {
+    try { localStorage.removeItem(SESS_KEY); } catch (e) { }
+  }
+  function resumeSession() {
+    var snap = readSession();
+    if (!snap || !snap.qids || !snap.qids.length) { App.toast('没有未完成的练习'); return; }
+    DB.getQuestions(snap.bankId).then(function (all) {
+      var byId = {};
+      all.forEach(function (q) { byId[q.id] = q; });
+      var qs = [];
+      (snap.qids || []).forEach(function (id) { if (byId[id]) qs.push(byId[id]); });
+      if (!qs.length) {
+        clearSession();
+        App.toast('原题库已不存在，续作记录已清除');
+        return;
+      }
+      if (App.sel) {
+        App.sel.pracBank = snap.bankId;
+        App.sel.pracScope = snap.scope || 'all';
+        App.sel.pracTypes = (snap.types || []).slice();
+        App.sel.pracOrder = snap.order || 'seq';
+        App.sel.pracLimit = String(snap.limit || '0');
+      }
+      cache();
+      S = {
+        mode: 'practice', bankId: snap.bankId, title: snap.title || '',
+        qs: qs, duration: 0,
+        i: Math.min(snap.i || 0, qs.length - 1),
+        answers: {}, startAt: Date.now(), endAt: 0
+      };
+      S.states = qs.map(function (q, i) {
+        var sa = (snap.states || [])[i] || {};
+        return { v: sa.v !== undefined ? sa.v : null, done: !!sa.done, ok: !!sa.ok, partial: !!sa.partial };
+      });
+      el['card-mask'].hidden = true;
+      clearInterval(timer);
+      App.go('page-quiz');
+      render();
+      App.toast('已回到第 ' + (S.i + 1) + ' 题');
+    });
+  }
+
   /* ---------------- 结束 ---------------- */
   function stop() {
     clearInterval(timer);
@@ -252,6 +319,7 @@
   }
 
   function finishPractice() {
+    clearSession();
     var done = S.states.filter(function (s) { return s.done; });
     var ok = S.states.filter(function (s) { return s.ok; });
     var total = S.qs.length;
@@ -344,8 +412,9 @@
     el['qz-card'].onclick = openCard;
     el['sh-close'].onclick = function () { el['card-mask'].hidden = true; };
     el['card-mask'].onclick = function (e) { if (e.target === el['card-mask']) el['card-mask'].hidden = true; };
-    el['qz-prev'].onclick = function () { if (S.i > 0) { S.i--; render(); } };
+    el['qz-prev'].onclick = function () { if (S && S.i > 0) { S.i--; render(); } };
     el['qz-next'].onclick = function () {
+      if (!S) return;
       if (S.i < S.qs.length - 1) { S.i++; render(); }
       else {
         if (S.mode === 'exam') { if (confirm('确认交卷？')) finishExam(false); }
@@ -353,6 +422,7 @@
       }
     };
     el['qz-main'].onclick = function () {
+      if (!S) return;
       if (S.mode === 'practice') submitCurrent();
       else if (S.mode === 'recite') {
         var q = S.qs[S.i];
@@ -366,6 +436,7 @@
       App.toggleFav(S.bankId, q.id).then(render);
     };
     el['qz-fill'].oninput = function (e) {
+      if (!S) return;
       var st = S.states[S.i];
       if (!st.done) st.v = e.target.value;
     };
@@ -432,5 +503,5 @@
     } else if (S.i > 0) { S.i--; render(); }
   }
 
-  window.Quiz = { start: start, stop: stop, bind: bind };
+  window.Quiz = { start: start, stop: stop, bind: bind, readSession: readSession, resumeSession: resumeSession, clearSession: clearSession };
 })();
