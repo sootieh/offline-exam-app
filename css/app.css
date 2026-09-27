@@ -609,24 +609,18 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
 .pr-bar{height:7px;border-radius:4px;background:var(--fill);overflow:hidden}
 .pr-bar i{display:block;height:100%;border-radius:4px;background:var(--brand-d);transition:width .3s}
 
-/* ---------------- 浏览页 ---------------- */
-.br-meta{display:flex;align-items:center;gap:10px;margin:2px 2px 10px}
-.br-pos{font-size:13px;color:var(--txt3);font-variant-numeric:tabular-nums;flex:1}
-.br-card{background:var(--card-solid);border-radius:var(--r-l);padding:18px 18px 20px;box-shadow:var(--sh);
-  border:1px solid rgba(0,0,0,.03);touch-action:pan-y}
-.br-stem{font-size:17.5px;line-height:1.55;font-weight:500;white-space:pre-wrap;margin-bottom:14px}
-.br-opts{display:flex;flex-direction:column;gap:9px}
-.br-opt{display:flex;gap:10px;padding:11px 13px;border-radius:12px;background:var(--fill);font-size:15.5px;line-height:1.45}
-.br-opt .k{font-weight:600;color:var(--brand-d);flex:0 0 auto}
-.br-opt.right{background:var(--green-l);color:var(--brand-d);font-weight:600}
-.br-ans{margin-top:14px;font-size:15.5px;color:var(--brand-d);font-weight:600}
-.br-ans.bad{color:var(--txt2);font-weight:400}
-.br-exp{margin-top:10px;font-size:14.5px;line-height:1.6;color:var(--txt2);background:var(--fill);
-  border-radius:12px;padding:12px 14px;white-space:pre-wrap}
-.br-exp:empty{display:none}
-.br-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
-.br-actions .btn.primary{grid-column:span 2}
-.br-actions .btn{padding:13px}
+/* ---------------- 浏览页（与刷题页同一套视觉：复用 qz-* 样式类） ---------------- */
+.br-meta{display:flex;align-items:center;gap:10px;margin:2px 2px 14px}
+.br-meta .qz-prog span{font-size:13px;color:var(--txt3);font-variant-numeric:tabular-nums}
+.br-master-btn{margin-left:auto;background:none;border:none;font-size:13px;font-weight:600;
+  color:var(--txt2);padding:5px 2px;cursor:pointer;display:flex;align-items:center;gap:3px}
+.br-master-btn:active{opacity:.5}
+.br-master-btn.on{color:var(--green)}
+.br-body{touch-action:pan-y}
+.br-body .qz-stem{margin-bottom:16px}
+.br-body .qz-opts{margin-bottom:2px}
+.br-actions{border-top:none;background:none;padding:0;margin-top:14px;gap:9px}
+.br-actions .qz-act{padding:13px 4px}
 
 /* ---------------- 错题页 ---------------- */
 .wrong-item{background:var(--card-solid);border-radius:var(--r);padding:14px 16px;margin-bottom:10px;

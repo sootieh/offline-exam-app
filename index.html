@@ -281,18 +281,22 @@ D. 管制
           <div id="browse-types" class="chip-wrap"></div>
           <p class="hint">可多选；一项都不选时浏览全部题型。</p>
         </div>
-        <div class="br-meta"><span class="qz-type" id="br-type">单选题</span><span class="br-pos" id="br-pos">0/0</span></div>
-        <div class="br-card" id="br-body">
-          <div class="br-stem" id="br-stem"></div>
-          <div class="br-opts" id="br-opts"></div>
-          <div class="br-ans" id="br-ans"></div>
-          <div class="br-exp" id="br-exp"></div>
+        <div class="br-meta">
+          <span class="qz-type" id="br-type">单选题</span>
+          <div class="qz-prog"><div class="qz-bar"><i id="br-bar"></i></div><span id="br-pos">0/0</span></div>
+          <button class="br-master-btn" id="br-master">✓ 记住了</button>
         </div>
-        <div class="br-actions">
-          <button class="btn ghost" id="br-prev">上一题</button>
-          <button class="btn ghost" id="br-master">✓ 记住了</button>
-          <button class="btn ghost" id="br-fav">☆ 收藏</button>
-          <button class="btn primary" id="br-next">下一题</button>
+        <div class="br-body" id="br-body">
+          <div class="qz-stem" id="br-stem"></div>
+          <div class="qz-opts" id="br-opts"></div>
+          <div class="qz-answer" id="br-ans" hidden></div>
+          <div class="qz-exp" id="br-exp" hidden></div>
+        </div>
+        <div class="qz-bottom br-actions">
+          <button class="qz-act" id="br-prev">上一题</button>
+          <button class="qz-act" id="br-edit">✎ 修改</button>
+          <button class="qz-act fav" id="br-fav">☆ 收藏</button>
+          <button class="qz-act primary" id="br-next">下一题</button>
         </div>
         <div class="pad"></div>
       </div>
@@ -449,7 +453,7 @@ D. 管制
         <div class="blk-title">关于</div>
         <div class="tip">
           <p>纯本地运行，所有数据存在你的手机浏览器里，不上传任何服务器。</p>
-          <p>版本号 1.7.0 · 离线可用 · 支持深色模式</p>
+          <p>版本号 1.8.0 · 离线可用 · 支持深色模式</p>
         </div>
       </div>
       <div class="pad"></div>
