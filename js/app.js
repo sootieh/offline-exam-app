@@ -416,6 +416,64 @@
       c.onclick = function () { openEdit(c.getAttribute('data-id')); };
     });
   }
+  /* 全局题库：只在题库页下拉选择，浏览 / 刷题 / 错题页共用 */
+  function setGlobalBank(bid) {
+    App.sel.homeBank = bid;
+    App.sel.pracBank = bid;
+    App.sel.browseBank = bid;
+    App.sel.wrongBank = bid;
+    App.sel.browseIdx = 0;
+    App.sel.browseTypes = [];
+    App.browseAll = null;
+    App.browseList = [];
+  }
+  function curBankName() {
+    var b = App.banks.filter(function (x) { return x.id === App.sel.homeBank; })[0];
+    return b ? b.name : '—';
+  }
+  function paintCurBank() {
+    var n = curBankName();
+    ['cur-bank-prac', 'cur-bank-browse', 'cur-bank-wrong'].forEach(function (id) {
+      var e = $(id); if (e) e.textContent = n;
+    });
+  }
+
+  /* 浏览进度快照：记住看到第几题与题型筛选 */
+  var BROWSE_KEY = 'examapp-browse';
+  function saveBrowse() {
+    if (!App.sel.browseBank) return;
+    try {
+      localStorage.setItem(BROWSE_KEY, JSON.stringify({
+        bankId: App.sel.browseBank,
+        types: (App.sel.browseTypes || []).slice(),
+        idx: App.sel.browseIdx || 0,
+        savedAt: Date.now()
+      }));
+    } catch (e) { }
+  }
+  function readBrowse() {
+    try { return JSON.parse(localStorage.getItem(BROWSE_KEY) || 'null'); } catch (e) { return null; }
+  }
+  function clearBrowse() {
+    try { localStorage.removeItem(BROWSE_KEY); } catch (e) { }
+  }
+  function renderBrowseResume() {
+    var snap = readBrowse();
+    var card = $('browse-resume');
+    var ok = snap && snap.bankId === App.sel.browseBank && (snap.idx || 0) > 0;
+    card.hidden = !ok;
+    if (!ok) return;
+    $('browse-resume-sub').textContent = '上次看到第 ' + ((snap.idx || 0) + 1) + ' 题';
+  }
+  function renderPracResume() {
+    var snap = Quiz.readSession ? Quiz.readSession() : null;
+    var card = $('prac-resume');
+    var ok = snap && snap.bankId === App.sel.pracBank && (snap.i || 0) > 0;
+    card.hidden = !ok;
+    if (!ok) return;
+    $('prac-resume-sub').textContent = '已答 ' + (snap.answered || 0) + ' / ' + (snap.total || 0) + ' 题';
+  }
+
   function renderBanks() {
     if (!App.banks.length) {
       $('bank-home').hidden = true; $('bank-empty').hidden = false;
@@ -432,14 +490,12 @@
     if (!App.sel.homeBank || !App.banks.some(function (b) { return b.id === App.sel.homeBank; })) {
       App.sel.homeBank = App.banks[0].id;
     }
-    $('home-banks').innerHTML = App.banks.map(function (b) {
-      return '<button class="radio-row' + (b.id === App.sel.homeBank ? ' on' : '') + '" data-id="' + b.id + '">' +
-        '<span class="radio-dot"></span><span class="radio-name">' + esc(b.name) + '</span>' +
-        '<span class="radio-count">' + (App.counts[b.id] || 0) + ' 题</span></button>';
+    var selEl = $('home-bank');
+    selEl.innerHTML = App.banks.map(function (b) {
+      return '<option value="' + b.id + '"' + (b.id === App.sel.homeBank ? ' selected' : '') + '>' +
+        esc(b.name) + '（' + (App.counts[b.id] || 0) + ' 题）</option>';
     }).join('');
-    bindChips($('home-banks'), 'data-id', function (v) {
-      if (v !== App.sel.homeBank) { App.sel.homeBank = v; renderBanks(); }
-    });
+    if (selEl.value !== App.sel.homeBank) selEl.value = App.sel.homeBank;
     renderHomeStats();
     renderResumeCard();
   }
@@ -493,16 +549,9 @@
     if (!App.sel.browseBank || !App.banks.some(function (b) { return b.id === App.sel.browseBank; })) {
       App.sel.browseBank = App.banks[0].id;
     }
-    $('browse-banks').innerHTML = App.banks.map(function (b) {
-      return '<button class="chip' + (b.id === App.sel.browseBank ? ' on' : '') + '" data-id="' + b.id + '">' +
-        esc(b.name) + '（' + (App.counts[b.id] || 0) + '）</button>';
-    }).join('');
-    bindChips($('browse-banks'), 'data-id', function (v) {
-      if (v !== App.sel.browseBank) {
-        App.sel.browseBank = v; App.sel.browseTypes = []; App.sel.browseIdx = 0;
-        renderBrowse();
-      }
-    });
+    App.sel.browseBank = App.sel.homeBank;
+    paintCurBank();
+    renderBrowseResume();
     renderBrowseTypes();
   }
 
@@ -572,6 +621,7 @@
     $('br-fav').classList.toggle('on', fav);
     var mst = App.isMastered(bid, q.id);
     $('br-master').textContent = mst ? '✓ 已掌握' : '✓ 记住了';
+    saveBrowse();
   }
 
   function browseNav(dir) {
@@ -587,21 +637,8 @@
   function renderWrong() {
     if (!App.banks.length) { $('wrong-body').hidden = true; $('wrong-empty').hidden = false; return; }
     $('wrong-body').hidden = false; $('wrong-empty').hidden = true;
-    // 有错题的题库排前面
-    var sorted = App.banks.slice().sort(function (a, b) {
-      return wrongCountOf(b.id) - wrongCountOf(a.id);
-    });
-    if (!App.sel.wrongBank || !App.banks.some(function (b) { return b.id === App.sel.wrongBank; })) {
-      App.sel.wrongBank = sorted[0].id;
-    }
-    $('wrong-banks').innerHTML = sorted.map(function (b) {
-      var n = wrongCountOf(b.id);
-      return '<button class="chip' + (b.id === App.sel.wrongBank ? ' on' : '') + '" data-id="' + b.id + '">' +
-        esc(b.name) + '（错 ' + n + '）</button>';
-    }).join('');
-    bindChips($('wrong-banks'), 'data-id', function (v) {
-      if (v !== App.sel.wrongBank) { App.sel.wrongBank = v; renderWrong(); }
-    });
+    App.sel.wrongBank = App.sel.homeBank;
+    paintCurBank();
     renderWrongList();
   }
 
@@ -697,14 +734,9 @@
     setGroup('prac-scope', App.sel.pracScope);
     setGroup('prac-order', App.sel.pracOrder);
     setGroup('prac-limit', App.sel.pracLimit);
-    $('prac-banks').innerHTML = App.banks.map(function (b) {
-      return '<button class="chip' + (b.id === App.sel.pracBank ? ' on' : '') + '" data-id="' + b.id + '">' +
-        esc(b.name) + '（' + (App.counts[b.id] || 0) + '）</button>';
-    }).join('');
-    bindChips($('prac-banks'), 'data-id', function (v) {
-      if (v !== App.sel.pracBank) { App.sel.pracBank = v; App.sel.pracTypes = []; }
-      renderPractice();
-    });
+    App.sel.pracBank = App.sel.homeBank;
+    paintCurBank();
+    renderPracResume();
     renderPracTypes();
   }
 
@@ -1268,6 +1300,29 @@
     $('btn-goto-import').onclick = function () { App.go('page-import'); };
     $('btn-empty-import').onclick = function () { App.go('page-import'); };
     $('btn-resume').onclick = function () { Quiz.resumeSession(); };
+    $('home-bank').onchange = function () {
+      setGlobalBank($('home-bank').value);
+      renderBanks();
+    };
+    $('prac-resume-go').onclick = function () { Quiz.resumeSession(); };
+    $('prac-resume-restart').onclick = function () {
+      Quiz.clearSession();
+      $('prac-resume').hidden = true;
+      startPractice('practice');
+    };
+    $('browse-resume-go').onclick = function () {
+      var snap = readBrowse();
+      if (!snap || snap.bankId !== App.sel.browseBank) { renderBrowseResume(); return; }
+      App.sel.browseTypes = (snap.types || []).slice();
+      App.sel.browseIdx = snap.idx || 0;
+      renderBrowseTypes();
+    };
+    $('browse-resume-restart').onclick = function () {
+      clearBrowse();
+      App.sel.browseIdx = 0;
+      $('browse-resume').hidden = true;
+      renderBrowseTypes();
+    };
     $('btn-home-prac').onclick = function () {
       App.sel.pracBank = App.sel.homeBank; App.sel.pracScope = 'all';
       App.go('page-practice');

@@ -41,9 +41,9 @@
           <div class="rc-txt"><div class="rc-t">未完成练习</div><div class="rc-s" id="resume-sub">0 / 0</div></div>
           <button class="rc-go" id="btn-resume">继续<svg class="ico" viewBox="0 0 24 24"><path d="M8 5.5l10 6.5-10 6.5z"/></svg></button>
         </div>
-        <div class="block">
-          <div class="blk-title">选择题库</div>
-          <div id="home-banks" class="radio-list"></div>
+        <div class="bank-picker">
+          <select id="home-bank" class="bank-select" aria-label="选择题库"></select>
+          <svg class="bp-arrow" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5"/></svg>
         </div>
         <div class="home-hero">
           <div class="hh-label">当前题库</div>
@@ -209,9 +209,12 @@ D. 管制
         <button class="btn primary" data-goto="page-import">去导入</button>
       </div>
       <div id="prac-body">
-        <div class="block">
-          <div class="blk-title">选择题库</div>
-          <div id="prac-banks" class="chip-wrap"></div>
+        <div class="cur-bank">当前题库：<b id="cur-bank-prac"></b><button class="cb-link" data-goto="page-banks">切换 ›</button></div>
+        <div class="resume-card" id="prac-resume" hidden>
+          <div class="rc-ico"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="M12 7.6V12l2.9 1.7"/></svg></div>
+          <div class="rc-txt"><div class="rc-t">未完成练习</div><div class="rc-s" id="prac-resume-sub"></div></div>
+          <button class="rc-go" id="prac-resume-go">继续</button>
+          <button class="rc-restart" id="prac-resume-restart">重新开始</button>
         </div>
         <div class="block">
           <div class="blk-title">题型</div>
@@ -266,9 +269,12 @@ D. 管制
         <button class="btn primary" data-goto="page-import">去导入</button>
       </div>
       <div id="browse-body">
-        <div class="block">
-          <div class="blk-title">选择题库</div>
-          <div id="browse-banks" class="chip-wrap"></div>
+        <div class="cur-bank">当前题库：<b id="cur-bank-browse"></b><button class="cb-link" data-goto="page-banks">切换 ›</button></div>
+        <div class="resume-card" id="browse-resume" hidden>
+          <div class="rc-ico"><svg class="ico" viewBox="0 0 24 24"><path d="M12 6.6C10.4 5.2 8.3 4.4 6 4.4c-1 0-2 .15-2.9.45v13.9c.9-.3 1.9-.45 2.9-.45 2.3 0 4.4.8 6 2.2 1.6-1.4 3.7-2.2 6-2.2 1 0 2 .15 2.9.45V4.85c-.9-.3-1.9-.45-2.9-.45-2.3 0-4.4.8-6 2.2z"/><path d="M12 6.6v13.9"/></svg></div>
+          <div class="rc-txt"><div class="rc-t">上次浏览进度</div><div class="rc-s" id="browse-resume-sub"></div></div>
+          <button class="rc-go" id="browse-resume-go">继续</button>
+          <button class="rc-restart" id="browse-resume-restart">重新开始</button>
         </div>
         <div class="block">
           <div class="blk-title">题型</div>
@@ -309,10 +315,7 @@ D. 管制
         <p>还没有错题，继续加油</p>
       </div>
       <div id="wrong-body">
-        <div class="block">
-          <div class="blk-title">选择题库</div>
-          <div id="wrong-banks" class="chip-wrap"></div>
-        </div>
+        <div class="cur-bank">当前题库：<b id="cur-bank-wrong"></b><button class="cb-link" data-goto="page-banks">切换 ›</button></div>
         <div class="block">
           <button class="btn primary big" id="btn-redo-wrong">重做错题</button>
         </div>
@@ -446,7 +449,7 @@ D. 管制
         <div class="blk-title">关于</div>
         <div class="tip">
           <p>纯本地运行，所有数据存在你的手机浏览器里，不上传任何服务器。</p>
-          <p>版本号 1.6.0 · 离线可用 · 支持深色模式</p>
+          <p>版本号 1.7.0 · 离线可用 · 支持深色模式</p>
         </div>
       </div>
       <div class="pad"></div>

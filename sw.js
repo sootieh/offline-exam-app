@@ -1,5 +1,5 @@
 /* 离线缓存：首次打开后即可断网使用 */
-var CACHE = 'examapp-v16';
+var CACHE = 'examapp-v17';
 var ICON_VARIANTS = [
   'check-wx', 'check-zfb', 'check-ha', 'check-white',
   'star-wx', 'star-zfb', 'star-ha', 'star-white',
