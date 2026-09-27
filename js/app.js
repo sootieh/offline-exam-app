@@ -200,7 +200,7 @@
     lastPage: 'page-banks',
     stack: [],
     sel: {
-      pracBank: null, pracScope: 'all', pracOrder: 'seq', pracLimit: '0',
+      pracBank: null, pracScope: 'all', pracOrder: 'seq', pracLimit: '0', pracTypes: [],
       examBank: null, examTime: '60', examSrc: 'all', examTypes: {}
     },
     pending: null,        // 待导入题目
@@ -467,17 +467,58 @@
       return '<button class="chip' + (b.id === App.sel.pracBank ? ' on' : '') + '" data-id="' + b.id + '">' +
         esc(b.name) + '（' + (App.counts[b.id] || 0) + '）</button>';
     }).join('');
-    bindChips($('prac-banks'), 'data-id', function (v) { App.sel.pracBank = v; renderPractice(); });
+    bindChips($('prac-banks'), 'data-id', function (v) {
+      if (v !== App.sel.pracBank) { App.sel.pracBank = v; App.sel.pracTypes = []; }
+      renderPractice();
+    });
+    renderPracTypes();
+  }
+
+  /* 练习：题型多选（按当前题库实际题型渲染，带题数） */
+  function renderPracTypes() {
+    var bid = App.sel.pracBank;
+    var sel = App.sel.pracTypes || [];
+    DB.getQuestions(bid).then(function (all) {
+      var types = {};
+      all.forEach(function (q) { types[q.type] = (types[q.type] || 0) + 1; });
+      var keys = Parser.TYPES.filter(function (t) { return types[t]; });
+      var wrap = $('prac-types');
+      if (!keys.length) {
+        wrap.innerHTML = '<span class="tag">该题库暂无可选题型</span>';
+        return;
+      }
+      wrap.innerHTML = '<button class="chip' + (sel.length ? '' : ' on') + '" data-t="all">全部</button>' +
+        keys.map(function (t) {
+          return '<button class="chip' + (sel.indexOf(t) >= 0 ? ' on' : '') + '" data-t="' + t + '">' +
+            Parser.typeName(t) + '（' + types[t] + '）</button>';
+        }).join('');
+      bindChips(wrap, 'data-t', function (v) {
+        var cur = App.sel.pracTypes || [];
+        if (v === 'all') App.sel.pracTypes = [];
+        else {
+          var i = cur.indexOf(v);
+          if (i >= 0) cur.splice(i, 1); else cur.push(v);
+          App.sel.pracTypes = cur;
+        }
+        renderPracTypes();
+      });
+    });
   }
 
   function startPractice(mode) {
     var bid = App.sel.pracBank;
     var order = App.sel.pracOrder, limit = +App.sel.pracLimit;
+    var types = App.sel.pracTypes || [];
     DB.getQuestions(bid).then(function (all) {
       return DB.getRecords(bid).then(function (recs) {
         App.setRecords(bid, recs);
-        var list = sortQs(filterQs(all, bid, App.sel.pracScope), order, limit);
-        if (!list.length) { App.toast('该范围内没有题目'); return; }
+        var list = sortQs(filterQs(all, bid, App.sel.pracScope).filter(function (q) {
+          return !types.length || types.indexOf(q.type) >= 0;
+        }), order, limit);
+        if (!list.length) {
+          App.toast(types.length ? '当前题型与范围下没有题目' : '该范围内没有题目');
+          return;
+        }
         var b = App.banks.filter(function (x) { return x.id === bid; })[0];
         Quiz.start({ mode: mode, bankId: bid, title: b ? b.name : '', questions: list });
       });
