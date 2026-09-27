@@ -176,7 +176,7 @@
         // 考试：只记录所选，不判分不显示答案（交卷时统一判分），短暂停顿后自动跳下一题
         // 注意不能在此置 st.done / 写记录：否则交卷时会被当成"已判过"而漏判、且 seen 会重复计数
         render();
-        setTimeout(function () { if (S.i < S.qs.length - 1) { S.i++; render(); } }, 220);
+        setTimeout(function () { if (S.i < S.qs.length - 1) { S.i++; S.expOpen = false; render(); } }, 220);
       } else {
         render();
         // 单选/判断：选定后不判分，停顿片刻直接跳下一题（可在 设置 → 答题与翻题 关闭）
@@ -186,7 +186,7 @@
           setTimeout(function () {
             // 期间若已翻页/退出会话则不跳转，避免误跳
             if (!S || S !== session || S.i !== idx) return;
-            if (!last) { S.i++; render(); }
+            if (!last) { S.i++; S.expOpen = false; render(); }
           }, 420);
         }
       }
@@ -236,7 +236,7 @@
       return s.v && (Array.isArray(s.v) ? s.v.length : s.v);
     }).length + '/' + S.qs.length;
     Array.prototype.forEach.call(el['sh-grid'].children, function (b) {
-      b.onclick = function () { S.i = +b.getAttribute('data-i'); el['card-mask'].hidden = true; render(); };
+      b.onclick = function () { S.i = +b.getAttribute('data-i'); S.expOpen = false; el['card-mask'].hidden = true; render(); };
     });
     el['card-mask'].hidden = false;
   }
@@ -415,10 +415,10 @@
     el['qz-card'].onclick = openCard;
     el['sh-close'].onclick = function () { el['card-mask'].hidden = true; };
     el['card-mask'].onclick = function (e) { if (e.target === el['card-mask']) el['card-mask'].hidden = true; };
-    el['qz-prev'].onclick = function () { if (S && S.i > 0) { S.i--; render(); } };
+    el['qz-prev'].onclick = function () { if (S && S.i > 0) { S.i--; S.expOpen = false; render(); } };
     el['qz-next'].onclick = function () {
       if (!S) return;
-      if (S.i < S.qs.length - 1) { S.i++; render(); }
+      if (S.i < S.qs.length - 1) { S.i++; S.expOpen = false; render(); }
       else {
         if (S.mode === 'exam') { if (confirm('确认交卷？')) finishExam(false); }
         else finishPractice();
@@ -506,9 +506,9 @@
   function nav(dir) {
     if (!S) return;
     if (dir > 0) {
-      if (S.i < S.qs.length - 1) { S.i++; render(); }
+      if (S.i < S.qs.length - 1) { S.i++; S.expOpen = false; render(); }   // 每题进入默认折叠
       else if (S.mode !== 'exam') finishPractice();
-    } else if (S.i > 0) { S.i--; render(); }
+    } else if (S.i > 0) { S.i--; S.expOpen = false; render(); }
   }
 
   window.Quiz = { start: start, stop: stop, bind: bind, readSession: readSession, resumeSession: resumeSession, clearSession: clearSession };
