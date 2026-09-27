@@ -610,17 +610,10 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
 .pr-bar i{display:block;height:100%;border-radius:4px;background:var(--brand-d);transition:width .3s}
 
 /* ---------------- 浏览页（与刷题页同一套视觉：复用 qz-* 样式类） ---------------- */
-.br-meta{display:flex;align-items:center;gap:10px;margin:2px 2px 14px}
-.br-meta .qz-prog span{font-size:13px;color:var(--txt3);font-variant-numeric:tabular-nums}
 .br-master-btn{margin-left:auto;background:none;border:none;font-size:13px;font-weight:600;
   color:var(--txt2);padding:5px 2px;cursor:pointer;display:flex;align-items:center;gap:3px}
 .br-master-btn:active{opacity:.5}
 .br-master-btn.on{color:var(--green)}
-.br-body{touch-action:pan-y}
-.br-body .qz-stem{margin-bottom:16px}
-.br-body .qz-opts{margin-bottom:2px}
-.br-actions{border-top:none;background:none;padding:0;margin-top:14px;gap:9px}
-.br-actions .qz-act{padding:13px 4px}
 
 /* ---------------- 错题页 ---------------- */
 .wrong-item{background:var(--card-solid);border-radius:var(--r);padding:14px 16px;margin-bottom:10px;

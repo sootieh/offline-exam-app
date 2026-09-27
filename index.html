@@ -52,7 +52,7 @@
         </div>
         <div class="home-actions">
           <button class="btn-home primary" id="btn-home-prac"><svg class="ico" viewBox="0 0 24 24"><path d="M8 5.5l10 6.5-10 6.5z"/></svg>开始刷题</button>
-          <button class="btn-home ghost" id="btn-home-browse"><svg class="ico" viewBox="0 0 24 24"><path d="M12 6.6C10.4 5.2 8.3 4.4 6 4.4c-1 0-2 .15-2.9.45v13.9c.9-.3 1.9-.45 2.9-.45 2.3 0 4.4.8 6 2.2 1.6-1.4 3.7-2.2 6-2.2 1 0 2 .15 2.9.45V4.85c-.9-.3-1.9-.45-2.9-.45-2.3 0-4.4.8-6 2.2z"/><path d="M12 6.6v13.9"/></svg>浏览题库</button>
+          <button class="btn-home ghost" id="btn-home-browse"><svg class="ico" viewBox="0 0 24 24"><path d="M12 6.6C10.4 5.2 8.3 4.4 6 4.4c-1 0-2 .15-2.9.45v13.9c.9-.3 1.9-.45 2.9-.45 2.3 0 4.4.8 6 2.2 1.6-1.4 3.7-2.2 6-2.2 1 0 2 .15 2.9.45V4.85c-.9-.3-1.9-.45-2.9-.45-2.3 0-4.4.8-6 2.2z"/><path d="M12 6.6v13.9"/></svg>开始浏览</button>
           <button class="btn-home ghost" id="btn-home-random"><svg class="ico" viewBox="0 0 24 24"><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7.2 18.8 3 20l1.2-4.2z"/><path d="M14.7 5.3l3.4 3.4"/></svg>随机练习</button>
           <button class="btn-home ghost" id="btn-home-exam"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.6"/><path d="M12 9.1V13l2.9 1.7"/><path d="M9.4 2.6h5.2"/></svg>模拟考试</button>
         </div>
@@ -259,7 +259,7 @@ D. 管制
   <section id="page-browse" class="page">
     <header class="nav">
       <h1 class="nav-t">浏览</h1>
-      <button class="nav-btn" id="br-card">题卡</button>
+      <span></span>
     </header>
     <div class="scroll">
       <div class="lg-title">浏览</div>
@@ -281,23 +281,11 @@ D. 管制
           <div id="browse-types" class="chip-wrap"></div>
           <p class="hint">可多选；一项都不选时浏览全部题型。</p>
         </div>
-        <div class="br-meta">
-          <span class="qz-type" id="br-type">单选题</span>
-          <div class="qz-prog"><div class="qz-bar"><i id="br-bar"></i></div><span id="br-pos">0/0</span></div>
-          <button class="br-master-btn" id="br-master">✓ 记住了</button>
+        <div class="block">
+          <div class="blk-title">浏览范围</div>
+          <p class="hint" id="browse-summary">共 0 道题</p>
         </div>
-        <div class="br-body" id="br-body">
-          <div class="qz-stem" id="br-stem"></div>
-          <div class="qz-opts" id="br-opts"></div>
-          <div class="qz-answer" id="br-ans" hidden></div>
-          <div class="qz-exp" id="br-exp" hidden></div>
-        </div>
-        <div class="qz-bottom br-actions">
-          <button class="qz-act" id="br-prev">上一题</button>
-          <button class="qz-act" id="br-edit">✎ 修改</button>
-          <button class="qz-act fav" id="br-fav">☆ 收藏</button>
-          <button class="qz-act primary" id="br-next">下一题</button>
-        </div>
+        <button class="btn primary big" id="btn-start-browse">开始浏览</button>
         <div class="pad"></div>
       </div>
     </div>
@@ -453,11 +441,36 @@ D. 管制
         <div class="blk-title">关于</div>
         <div class="tip">
           <p>纯本地运行，所有数据存在你的手机浏览器里，不上传任何服务器。</p>
-          <p>版本号 1.8.0 · 离线可用 · 支持深色模式</p>
+          <p>版本号 1.9.0 · 离线可用 · 支持深色模式</p>
         </div>
       </div>
       <div class="pad"></div>
     </div>
+  </section>
+
+  <!-- ============ 浏览（全屏，与答题页同构） ============ -->
+  <section id="page-browse-run" class="page quiz">
+    <header class="qz-top">
+      <button class="qz-btn" id="bz-back">退出</button>
+      <div class="qz-prog"><div class="qz-bar"><i id="bz-bar"></i></div><span id="bz-pos">0/0</span></div>
+      <button class="qz-btn" id="bz-card">题卡</button>
+    </header>
+    <div class="qz-body" id="bz-body">
+      <div class="qz-meta">
+        <span class="qz-type" id="bz-type">单选题</span>
+        <button class="br-master-btn" id="bz-master">✓ 记住了</button>
+      </div>
+      <div class="qz-stem" id="bz-stem"></div>
+      <div class="qz-opts" id="bz-opts"></div>
+      <div class="qz-answer" id="bz-ans" hidden></div>
+      <div class="qz-exp" id="bz-exp" hidden></div>
+    </div>
+    <footer class="qz-bottom">
+      <button class="qz-act" id="bz-prev">上一题</button>
+      <button class="qz-act" id="bz-edit">✎ 修改</button>
+      <button class="qz-act fav" id="bz-fav">☆ 收藏</button>
+      <button class="qz-act primary" id="bz-next">下一题</button>
+    </footer>
   </section>
 
   <!-- ============ 答题器（全屏） ============ -->

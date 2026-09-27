@@ -584,8 +584,34 @@
         App.sel.browseIdx = 0;
         renderBrowseTypes();
       });
-      renderBrowseQ();
+      updateBrowseSummary();
     });
+  }
+
+  /* 配置页：显示「将浏览多少道题」 */
+  function browseFiltered() {
+    return App.browseAll ? App.browseAll.filter(function (q) {
+      var sel = App.sel.browseTypes || [];
+      return !sel.length || sel.indexOf(q.type) >= 0;
+    }) : [];
+  }
+  function updateBrowseSummary() {
+    var qs = browseFiltered();
+    var names = (App.sel.browseTypes || []).map(function (t) { return Parser.typeName(t); });
+    $('browse-summary').textContent = '共 ' + qs.length + ' 道题' +
+      (names.length ? '（' + names.join('、') + '）' : '（全部题型）');
+    $('btn-start-browse').disabled = !qs.length;
+    $('btn-start-browse').style.opacity = qs.length ? '' : '.5';
+  }
+
+  /* 开始浏览：进入全屏浏览页（与刷题一致的两段式操作） */
+  function startBrowse(reset) {
+    var qs = browseFiltered();
+    if (!qs.length) { App.toast('当前题型下没有题目'); return; }
+    if (reset) App.sel.browseIdx = 0;
+    App.sel.browseIdx = Math.min(App.sel.browseIdx, Math.max(0, qs.length - 1));
+    App.go('page-browse-run');
+    renderBrowseQ();
   }
 
   function renderBrowseQ() {
@@ -595,24 +621,24 @@
     }) : [];
     App.browseList = qs;
     var i = App.sel.browseIdx = Math.min(App.sel.browseIdx, Math.max(0, qs.length - 1));
-    $('br-pos').textContent = (qs.length ? i + 1 : 0) + ' / ' + qs.length;
-    $('br-bar').style.width = (qs.length ? Math.round((i + 1) / qs.length * 100) : 0) + '%';
+    $('bz-pos').textContent = (qs.length ? i + 1 : 0) + ' / ' + qs.length;
+    $('bz-bar').style.width = (qs.length ? Math.round((i + 1) / qs.length * 100) : 0) + '%';
     if (!qs.length) {
-      $('br-type').textContent = '—';
-      $('br-stem').textContent = '当前题型下没有题目';
-      $('br-opts').innerHTML = '';
-      $('br-ans').hidden = true; $('br-exp').hidden = true;
-      $('br-master').disabled = true; $('br-fav').disabled = true; $('br-edit').disabled = true;
+      $('bz-type').textContent = '—';
+      $('bz-stem').textContent = '当前题型下没有题目';
+      $('bz-opts').innerHTML = '';
+      $('bz-ans').hidden = true; $('bz-exp').hidden = true;
+      $('bz-master').disabled = true; $('bz-fav').disabled = true; $('bz-edit').disabled = true;
       return;
     }
-    $('br-master').disabled = false; $('br-fav').disabled = false; $('br-edit').disabled = false;
+    $('bz-master').disabled = false; $('bz-fav').disabled = false; $('bz-edit').disabled = false;
     var q = qs[i], bid = App.sel.browseBank;
-    var te = $('br-type');
+    var te = $('bz-type');
     te.textContent = Parser.typeName(q.type);
     te.className = 'qz-type ' + q.type;
-    $('br-stem').textContent = q.stem;
+    $('bz-stem').textContent = q.stem;
     // 与刷题页完全相同的选项样式（.opt），正确项标 .right
-    $('br-opts').innerHTML = (q.options || []).map(function (o) {
+    $('bz-opts').innerHTML = (q.options || []).map(function (o) {
       var right = q.answer.indexOf(o.key) >= 0;
       return '<div class="opt' + (right ? ' right' : '') + '">' +
         '<span class="k' + (q.type === 'multiple' ? ' multi' : '') + '">' + esc(o.key) + '</span>' +
@@ -622,16 +648,16 @@
       var o = (q.options || []).filter(function (x) { return x.key === k; })[0];
       return k + (o ? '. ' + o.text : '');
     }).join('　');
-    $('br-ans').hidden = false;
-    $('br-ans').innerHTML = '<b>正确答案：' + esc(ansTxt) + '</b>';
-    $('br-exp').hidden = !q.explanation;
-    $('br-exp').innerHTML = q.explanation ? '<span class="lb">解析</span>' + esc(q.explanation) : '';
+    $('bz-ans').hidden = false;
+    $('bz-ans').innerHTML = '<b>正确答案：' + esc(ansTxt) + '</b>';
+    $('bz-exp').hidden = !q.explanation;
+    $('bz-exp').innerHTML = q.explanation ? '<span class="lb">解析</span>' + esc(q.explanation) : '';
     var fav = App.isFav(bid, q.id);
-    $('br-fav').textContent = fav ? '★ 已收藏' : '☆ 收藏';
-    $('br-fav').classList.toggle('on', fav);
+    $('bz-fav').textContent = fav ? '★ 已收藏' : '☆ 收藏';
+    $('bz-fav').classList.toggle('on', fav);
     var mst = App.isMastered(bid, q.id);
-    $('br-master').textContent = mst ? '✓ 已掌握' : '✓ 记住了';
-    $('br-master').classList.toggle('on', mst);
+    $('bz-master').textContent = mst ? '✓ 已掌握' : '✓ 记住了';
+    $('bz-master').classList.toggle('on', mst);
     saveBrowse();
   }
 
@@ -692,7 +718,7 @@
 
   /* 浏览页滑动手势（遵循设置里的两个滑动开关） */
   function bindBrowseSwipe() {
-    var area = $('br-body');
+    var area = $('bz-body');
     if (!area || !area.addEventListener) return;
     var sx = 0, sy = 0, axis = null, mode = null, scrollY = false;
     function reset() { axis = null; mode = null; }
@@ -700,8 +726,7 @@
       if (!e.touches || e.touches.length !== 1) return;
       sx = e.touches[0].clientX; sy = e.touches[0].clientY;
       reset();
-      var sc = document.querySelector('#page-browse .scroll');
-      scrollY = !!sc && sc.scrollHeight > sc.clientHeight + 4;
+      scrollY = area.scrollHeight > area.clientHeight + 4;
     }, { passive: true });
     area.addEventListener('touchmove', function (e) {
       if (mode || !e.touches || !e.touches.length) return;
@@ -714,9 +739,8 @@
         else return;
       }
       if (axis === 'v' && scrollY) {                    // 还能滚动 → 让给原生滚动
-        var sc = document.querySelector('#page-browse .scroll');
-        var atTop = sc.scrollTop <= 0;
-        var atBottom = sc.scrollTop >= sc.scrollHeight - sc.clientHeight - 1;
+        var atTop = area.scrollTop <= 0;
+        var atBottom = area.scrollTop >= area.scrollHeight - area.clientHeight - 1;
         if ((dy > 0 && !atTop) || (dy < 0 && !atBottom)) { mode = 'scroll'; return; }
       }
       if (axis === 'h' && e.preventDefault) e.preventDefault();
@@ -1326,12 +1350,14 @@
       App.sel.browseTypes = (snap.types || []).slice();
       App.sel.browseIdx = snap.idx || 0;
       renderBrowseTypes();
+      startBrowse(false);
     };
     $('browse-resume-restart').onclick = function () {
       clearBrowse();
       App.sel.browseIdx = 0;
       $('browse-resume').hidden = true;
       renderBrowseTypes();
+      startBrowse(true);
     };
     $('btn-home-prac').onclick = function () {
       App.sel.pracBank = App.sel.homeBank; App.sel.pracScope = 'all';
@@ -1405,24 +1431,29 @@
     };
 
     // 浏览
-    $('br-prev').onclick = function () { browseNav(-1); };
-    $('br-next').onclick = function () { browseNav(1); };
-    $('br-master').onclick = function () {
+    $('btn-start-browse').onclick = function () { startBrowse(false); };
+    $('bz-back').onclick = function () { App.go('page-browse'); };
+    $('bz-prev').onclick = function () { browseNav(-1); };
+    $('bz-next').onclick = function () { browseNav(1); };
+    $('bz-master').onclick = function () {
       var q = (App.browseList || [])[App.sel.browseIdx];
       if (!q) return;
       App.toggleMastered(App.sel.browseBank, q.id).then(renderBrowseQ);
     };
-    $('br-fav').onclick = function () {
+    $('bz-fav').onclick = function () {
       var q = (App.browseList || [])[App.sel.browseIdx];
       if (!q) return;
       App.toggleFav(App.sel.browseBank, q.id).then(renderBrowseQ);
     };
-    $('br-edit').onclick = function () {
+    $('bz-edit').onclick = function () {
       var q = (App.browseList || [])[App.sel.browseIdx];
       if (!q) return;
-      openEdit(q.id, App.browseList, function () { renderBrowseTypes(); });
+      openEdit(q.id, App.browseList, function () {
+        renderBrowseTypes();
+        renderBrowseQ();
+      });
     };
-    $('br-card').onclick = function () {
+    $('bz-card').onclick = function () {
       var qs = App.browseList || [];
       $('br-jump-grid').innerHTML = qs.map(function (q, i) {
         var mst = App.isMastered(App.sel.browseBank, q.id);
