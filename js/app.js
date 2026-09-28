@@ -214,7 +214,7 @@
   };
 
   /* ================= 路由 ================= */
-  var TABS = ['page-banks', 'page-practice', 'page-wrong', 'page-settings'];
+  var TABS = ['page-banks', 'page-practice', 'page-exam', 'page-settings'];
   App.go = function (id) {
     if (id === 'page-banks') App.stack = [];
     var cur = document.querySelector('.page.active');
@@ -427,12 +427,6 @@
     var b = App.banks.filter(function (x) { return x.id === App.sel.homeBank; })[0];
     return b ? b.name : '—';
   }
-  function paintCurBank() {
-    var n = curBankName();
-    ['cur-bank-prac', 'cur-bank-wrong'].forEach(function (id) {
-      var e = $(id); if (e) e.textContent = n;
-    });
-  }
 
   function renderPracResume() {
     var snap = Quiz.readSession ? Quiz.readSession() : null;
@@ -512,6 +506,50 @@
   }
 
   /* ================= 浏览（逐题卡片） ================= */
+  function renderWrong() {
+    if (!App.banks.length) { $('wrong-body').hidden = true; $('wrong-empty').hidden = false; return; }
+    $('wrong-body').hidden = false; $('wrong-empty').hidden = true;
+    App.sel.wrongBank = App.sel.homeBank;
+    renderWrongList();
+  }
+
+  function wrongCountOf(bid) {
+    var rec = App.records[bid] || {};
+    var n = 0;
+    Object.keys(rec).forEach(function (k) {
+      if ((rec[k].wrong || 0) > 0 && !rec[k].mastered) n++;
+    });
+    return n;
+  }
+
+  function renderWrongList() {
+    var bid = App.sel.wrongBank;
+    DB.getQuestions(bid).then(function (all) {
+      var wrongs = filterQs(all, bid, 'wrong');
+      var btn = $('btn-redo-wrong');
+      btn.textContent = wrongs.length ? '重做这 ' + wrongs.length + ' 道错题' : '该题库暂无错题';
+      btn.disabled = !wrongs.length;
+      btn.style.opacity = wrongs.length ? 1 : .5;
+      var rec = App.records[bid] || {};
+      $('wrong-list').innerHTML = wrongs.map(function (q, i) {
+        var r = rec[q.id] || {};
+        var ansTxt = q.type === 'fill' ? q.answer.join(' / ') : q.answer.map(function (k) {
+          var o = (q.options || []).filter(function (x) { return x.key === k; })[0];
+          return k + (o ? '. ' + o.text : '');
+        }).join('　');
+        return '<div class="wrong-item" data-i="' + i + '">' +
+          '<div class="wi-stem">' + (i + 1) + '. ' + esc(q.stem) + '</div>' +
+          '<div class="wi-ans">正确答案：' + esc(ansTxt) + '</div>' +
+          '<div class="wi-sub">做错 ' + (r.wrong || 0) + ' 次 · 已练 ' + (r.seen || 0) + ' 次 · 点按展开解析</div>' +
+          '<div class="wi-exp">' + esc(q.explanation || '（无解析）') + '</div></div>';
+      }).join('') || '<p class="hint">该题库暂无错题</p>';
+      Array.prototype.forEach.call($('wrong-list').children, function (c) {
+        if (!c.classList.contains('wrong-item')) return;
+        c.onclick = function () { c.classList.toggle('open'); };
+      });
+    });
+  }
+
   function renderPractice() {
     if (!App.banks.length) { $('prac-body').hidden = true; $('prac-empty').hidden = false; return; }
     $('prac-body').hidden = false; $('prac-empty').hidden = true;
@@ -522,7 +560,6 @@
     setGroup('prac-order', App.sel.pracOrder);
     setGroup('prac-limit', App.sel.pracLimit);
     App.sel.pracBank = App.sel.homeBank;
-    paintCurBank();
     renderPracResume();
     renderPracTypes();
   }
@@ -582,16 +619,8 @@
   function renderExam() {
     if (!App.banks.length) { $('exam-body').hidden = true; $('exam-empty').hidden = false; return; }
     $('exam-body').hidden = false; $('exam-empty').hidden = true;
-    if (!App.sel.examBank || !App.banks.some(function (b) { return b.id === App.sel.examBank; })) {
-      App.sel.examBank = App.banks[0].id;
-    }
-    $('exam-banks').innerHTML = App.banks.map(function (b) {
-      return '<button class="chip' + (b.id === App.sel.examBank ? ' on' : '') + '" data-id="' + b.id + '">' +
-        esc(b.name) + '</button>';
-    }).join('');
-    bindChips($('exam-banks'), 'data-id', function (v) {
-      App.sel.examBank = v; App.sel.examTypes = {}; renderExam();
-    });
+    // 题库只在题库页选择，考试沿用全局当前题库
+    App.sel.examBank = App.sel.homeBank;
     renderExamTypes();
     renderExamHist();
   }
@@ -1107,6 +1136,10 @@
       startPractice('practice');
     };
     $('btn-home-exam').onclick = function () { App.go('page-exam'); };
+    $('btn-home-wrong').onclick = function () {
+      App.sel.wrongBank = App.sel.homeBank;
+      App.go('page-wrong');
+    };
     $('btn-goto-stats').onclick = function () { App.go('page-stats'); };
     $('btn-home-detail').onclick = function () { openBank(App.sel.homeBank); };
 

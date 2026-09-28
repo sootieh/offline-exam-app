@@ -637,15 +637,16 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
 .wrong-item.open .wi-exp{display:block}
 
 /* ---------------- 题库下拉选择器 / 当前题库行 ---------------- */
-.bank-picker{position:relative;display:inline-flex;align-items:center;margin:2px 0 16px;max-width:100%}
+.bank-picker{position:relative;display:inline-flex;align-items:center;max-width:100%}
 .bank-select{appearance:none;-webkit-appearance:none;background:var(--card-solid);color:var(--txt);
-  border:1.5px solid var(--sep);border-radius:20px;padding:9px 34px 9px 16px;font-size:15.5px;font-weight:600;
-  box-shadow:var(--sh);max-width:78vw;text-overflow:ellipsis;cursor:pointer;font-family:var(--font)}
+  border:1.5px solid var(--sep);border-radius:18px;padding:7px 30px 7px 14px;font-size:15px;font-weight:600;
+  box-shadow:var(--sh);max-width:100%;text-overflow:ellipsis;cursor:pointer;font-family:var(--font)}
+.nav-pick{gap:8px}
+.nav-pick .bank-picker{flex:1;min-width:0;margin:0}
+.nav-pick .bank-select{width:100%}
+.nav-pick .nav-btn{flex:0 0 auto}
 .bank-select:focus{outline:none;border-color:var(--brand-d)}
 .bp-arrow{position:absolute;right:12px;width:16px;height:16px;pointer-events:none;
   fill:none;stroke:var(--txt3);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.cur-bank{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--txt2);margin:0 2px 12px}
-.cur-bank b{color:var(--txt);font-weight:600;font-size:14.5px}
-.cb-link{margin-left:auto;background:none;border:none;color:var(--brand-d);font-size:13.5px;font-weight:600;cursor:pointer}
 .rc-restart{background:none;border:none;color:var(--txt2);font-size:13.5px;font-weight:600;cursor:pointer;
   padding:8px 6px;text-decoration:underline}
