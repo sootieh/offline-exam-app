@@ -662,3 +662,7 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
   background:var(--green-l);color:var(--brand-d);font-size:14px;font-weight:600;border:none;cursor:pointer}
 .wrong-item.open .wi-master{display:block}
 .wi-master:active{opacity:.6}
+
+/* 已作答提示（可修改） */
+.qz-redo{font-size:12.5px;color:var(--orange);background:var(--orange-l);
+  padding:4px 9px;border-radius:7px;font-weight:500;white-space:nowrap}

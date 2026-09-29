@@ -15,7 +15,7 @@
   function cache() {
     ['qz-back', 'qz-bar', 'qz-pos', 'qz-card', 'qz-type', 'qz-timer', 'qz-stem', 'qz-opts',
       'qz-fillwrap', 'qz-fill', 'qz-ansblock', 'qz-ans-toggle', 'qz-ans-body', 'qz-mine',
-      'qz-right', 'qz-exp2', 'qz-prev', 'qz-fav', 'qz-main', 'qz-next',
+      'qz-right', 'qz-exp2', 'qz-redo', 'qz-prev', 'qz-fav', 'qz-main', 'qz-next',
       'qz-body', 'card-mask', 'sh-grid', 'sh-close', 'sh-hint'].forEach(function (k) { el[k] = $(k); });
   }
 
@@ -91,7 +91,7 @@
           if (q.answer.indexOf(o.key) >= 0) cls += ' right';
           else if (sel.indexOf(o.key) >= 0) cls += ' wrong';
         }
-        if (st.done && S.mode !== 'exam') cls += ' locked';
+        if (S.mode === 'recite' ) cls += ' locked';   // 练习判分后仍可点选修改
         if (S.mode === 'recite' && q.answer.indexOf(o.key) >= 0) cls += ' right locked';
         return '<button class="' + cls + '" data-k="' + esc(o.key) + '">' +
           '<span class="k' + (q.type === 'multiple' ? ' multi' : '') + '">' + esc(o.key) + '</span>' +
@@ -102,16 +102,18 @@
       });
     } else {
       el['qz-fill'].value = typeof st.v === 'string' ? st.v : '';
-      el['qz-fill'].disabled = st.done && S.mode !== 'recite';
+      el['qz-fill'].disabled = (S.mode === 'recite');   // 练习判分后仍可修改答案
     }
 
     // 答案解析折叠块（取代浏览：默认折叠，可展开看我的答案 / 正确答案 / 参考解析）
     if (S.mode === 'exam') {
       el['qz-ansblock'].hidden = true;      // 考试不显示答案
+      el['qz-redo'].hidden = true;
     } else {
       el['qz-ansblock'].hidden = false;
       el['qz-ans-toggle'].classList.toggle('open', !!S.expOpen);
       el['qz-ans-body'].hidden = !S.expOpen;
+      el['qz-redo'].hidden = !(S.mode === 'practice' && st.done);
       if (S.expOpen) {
         var mine = '—';
         if (Array.isArray(st.v) && st.v.length) mine = q.type === 'fill' ? st.v.join(' / ') : st.v.join('、');
@@ -160,8 +162,9 @@
   function pick(k) {
     if (!S) return;
     var q = S.qs[S.i], st = S.states[S.i];
-    if (st.done && S.mode !== 'recite') return;
     if (S.mode === 'recite') return;
+    if (st.done && S.mode === 'practice') resetAnswered();   // 已判分也可修改：撤销后重选
+    else if (st.done) return;
 
     if (q.type === 'multiple') {
       var cur = Array.isArray(st.v) ? st.v.slice() : [];
@@ -208,6 +211,31 @@
     return DB.setRecord(bid, q.id, patch).then(function () {
       return DB.getRecords(bid).then(function (m) { App.setRecords(bid, m); });
     });
+  }
+
+  /* 撤销上一轮判分的记录，使重新作答不会把 seen / right / wrong 重复累加 */
+  function revertRecord(q, st) {
+    var bid = S ? S.bankId : null;
+    if (!bid) return Promise.resolve();
+    var rec = App.rec(bid, q.id) || {};
+    var patch = {};
+    if (rec.seen) patch.seen = Math.max(0, (rec.seen || 0) - 1);
+    if (st.ok) { if (rec.right) patch.right = Math.max(0, rec.right - 1); }
+    else if (rec.wrong) patch.wrong = Math.max(0, rec.wrong - 1);
+    if (!Object.keys(patch).length) return Promise.resolve();
+    return DB.setRecord(bid, q.id, patch).then(function () {
+      return DB.getRecords(bid).then(function (m) { App.setRecords(bid, m); });
+    });
+  }
+
+  /* 练习模式：已判分的题允许重新选择（先撤销上一轮记录，再按新答案判分） */
+  function resetAnswered() {
+    if (!S || S.mode !== 'practice') return;
+    var st = S.states[S.i];
+    if (!st || !st.done) return;
+    var q = S.qs[S.i];
+    revertRecord(q, st);
+    st.done = false; st.ok = false; st.partial = false;
   }
 
   function submitCurrent(quiet) {
@@ -463,6 +491,7 @@
     };
     el['qz-fill'].oninput = function (e) {
       if (!S) return;
+      if (S.mode === 'practice') resetAnswered();   // 改动填空内容即撤销上一轮判分
       var st = S.states[S.i];
       if (!st.done) st.v = e.target.value;
     };
