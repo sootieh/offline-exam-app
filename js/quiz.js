@@ -133,15 +133,15 @@
     el['qz-prev'].disabled = S.i === 0;
     el['qz-prev'].textContent = '上一题';
     if (S.mode === 'practice') {
-      el['qz-main'].textContent = st.done ? '已作答' : '确认作答';
-      el['qz-main'].disabled = st.done;
-      el['qz-main'].style.opacity = st.done ? .45 : 1;
+      el['qz-main'].hidden = true;      // 练习不再需要「确认作答」：跳转或退出即判为已作答
     } else if (S.mode === 'recite') {
       var mst = App.isMastered(S.bankId, q.id);
+      el['qz-main'].hidden = false;
       el['qz-main'].textContent = mst ? '✓ 已掌握（点击取消）' : '✓ 记住了';
       el['qz-main'].disabled = false;
       el['qz-main'].style.opacity = 1;
     } else {
+      el['qz-main'].hidden = false;
       el['qz-main'].textContent = '交卷';
       el['qz-main'].disabled = false;
       el['qz-main'].style.opacity = 1;
@@ -186,7 +186,7 @@
           setTimeout(function () {
             // 期间若已翻页/退出会话则不跳转，避免误跳
             if (!S || S !== session || S.i !== idx) return;
-            if (!last) { S.i++; S.expOpen = false; render(); }
+            if (!last) { autoSubmit(); S.i++; S.expOpen = false; render(); }
           }, 420);
         }
       }
@@ -194,33 +194,51 @@
   }
 
   function saveRecord(q, st, graded) {
+    // 会话可能在写入过程中结束（如退出时自动判分），先固定 bankId 避免异步回调里 S 已为 null
+    var bid = S ? S.bankId : (App.sel.pracBank || App.sel.examBank || App.sel.homeBank);
+    if (!bid) return Promise.resolve();
+    var mode = S ? S.mode : 'practice';
     var patch = {};
-    if (S.mode === 'recite') return Promise.resolve();
-    patch.seen = (App.rec(S.bankId, q.id).seen || 0) + 1;
+    if (mode === 'recite') return Promise.resolve();
+    patch.seen = (App.rec(bid, q.id).seen || 0) + 1;
     if (graded) {
-      if (st.ok) patch.right = (App.rec(S.bankId, q.id).right || 0) + 1;
-      else patch.wrong = (App.rec(S.bankId, q.id).wrong || 0) + 1;
+      if (st.ok) patch.right = (App.rec(bid, q.id).right || 0) + 1;
+      else patch.wrong = (App.rec(bid, q.id).wrong || 0) + 1;
     }
-    return DB.setRecord(S.bankId, q.id, patch).then(function () {
-      return DB.getRecords(S.bankId).then(function (m) { App.setRecords(S.bankId, m); });
+    return DB.setRecord(bid, q.id, patch).then(function () {
+      return DB.getRecords(bid).then(function (m) { App.setRecords(bid, m); });
     });
   }
 
-  function submitCurrent() {
-    if (!S) return;
+  function submitCurrent(quiet) {
+    if (!S) return false;
     var q = S.qs[S.i], st = S.states[S.i];
-    if (st.done) return;
+    if (st.done) return false;
     if (q.type === 'fill') {
       var v = document.getElementById('qz-fill').value.trim();
-      if (!v) { App.toast('请先填写答案'); return; }
+      if (!v) { if (!quiet) App.toast('请先填写答案'); return false; }
       st.v = v;
     }
-    if (!st.v || (Array.isArray(st.v) && !st.v.length)) { App.toast('请先选择答案'); return; }
+    if (!st.v || (Array.isArray(st.v) && !st.v.length)) {
+      if (!quiet) App.toast('请先选择答案');
+      return false;
+    }
     var r = Parser.check(q, q.type === 'fill' ? st.v : st.v);
     st.ok = r.ok; st.partial = r.partial; st.done = true;
     saveRecord(q, st, true);
-    S.expOpen = true;   // 判分后自动展开答案解析
+    if (!quiet) S.expOpen = true;   // 主动判分才自动展开答案解析
     render();
+    return true;
+  }
+
+  /* 练习模式：翻页 / 退出 / 完成时把当前题自动判为已作答（静默，不弹解析） */
+  function autoSubmit() {
+    if (!S || S.mode !== 'practice') return;
+    var st = S.states[S.i];
+    if (!st || st.done) return;
+    var v = st.v;
+    if (!v || (Array.isArray(v) && !v.length)) return;   // 未作答不判
+    submitCurrent(true);
   }
 
   /* ---------------- 题卡 ---------------- */
@@ -236,7 +254,7 @@
       return s.v && (Array.isArray(s.v) ? s.v.length : s.v);
     }).length + '/' + S.qs.length;
     Array.prototype.forEach.call(el['sh-grid'].children, function (b) {
-      b.onclick = function () { S.i = +b.getAttribute('data-i'); S.expOpen = false; el['card-mask'].hidden = true; render(); };
+      b.onclick = function () { autoSubmit(); S.i = +b.getAttribute('data-i'); S.expOpen = false; el['card-mask'].hidden = true; render(); };
     });
     el['card-mask'].hidden = false;
   }
@@ -311,6 +329,7 @@
   }
 
   function back() {
+    autoSubmit();     // 退出练习前把当前题判为已作答
     if (S && S.mode === 'exam' && !window.__examFinished) {
       if (!confirm('考试尚未交卷，退出后本次作答将不记录。确定退出？')) return;
     }
@@ -322,6 +341,7 @@
   }
 
   function finishPractice() {
+    autoSubmit();     // 最后一题同样判为已作答
     clearSession();
     var done = S.states.filter(function (s) { return s.done; });
     var ok = S.states.filter(function (s) { return s.ok; });
@@ -415,9 +435,12 @@
     el['qz-card'].onclick = openCard;
     el['sh-close'].onclick = function () { el['card-mask'].hidden = true; };
     el['card-mask'].onclick = function (e) { if (e.target === el['card-mask']) el['card-mask'].hidden = true; };
-    el['qz-prev'].onclick = function () { if (S && S.i > 0) { S.i--; S.expOpen = false; render(); } };
+    el['qz-prev'].onclick = function () {
+      if (S && S.i > 0) { autoSubmit(); S.i--; S.expOpen = false; render(); }
+    };
     el['qz-next'].onclick = function () {
       if (!S) return;
+      autoSubmit();
       if (S.i < S.qs.length - 1) { S.i++; S.expOpen = false; render(); }
       else {
         if (S.mode === 'exam') { if (confirm('确认交卷？')) finishExam(false); }
@@ -506,9 +529,10 @@
   function nav(dir) {
     if (!S) return;
     if (dir > 0) {
+      autoSubmit();
       if (S.i < S.qs.length - 1) { S.i++; S.expOpen = false; render(); }   // 每题进入默认折叠
       else if (S.mode !== 'exam') finishPractice();
-    } else if (S.i > 0) { S.i--; S.expOpen = false; render(); }
+    } else if (S.i > 0) { autoSubmit(); S.i--; S.expOpen = false; render(); }
   }
 
   window.Quiz = { start: start, stop: stop, bind: bind, readSession: readSession, resumeSession: resumeSession, clearSession: clearSession };

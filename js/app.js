@@ -288,7 +288,7 @@
     return list.filter(function (q) {
       var rec = r[q.id] || {};
       if (scope === 'new') return !rec.seen;
-      if (scope === 'wrong') return (rec.wrong || 0) > 0 && !(rec.right > 0);
+      if (scope === 'wrong') return (rec.wrong || 0) > 0 && !rec.mastered;   // 与「当前错题」统计口径一致：标记已掌握即移出
       if (scope === 'fav') return !!rec.fav;
       if (scope === 'unmastered') return !rec.mastered;
       return true;
@@ -437,6 +437,12 @@
     $('prac-resume-sub').textContent = '已答 ' + (snap.answered || 0) + ' / ' + (snap.total || 0) + ' 题';
   }
 
+  /* 错题入口：题库页按钮与「当前错题」统计卡共用 */
+  function gotoWrong() {
+    App.sel.wrongBank = App.sel.homeBank;
+    App.go('page-wrong');
+  }
+
   function renderBanks() {
     if (!App.banks.length) {
       $('bank-home').hidden = true; $('bank-empty').hidden = false;
@@ -537,15 +543,28 @@
           var o = (q.options || []).filter(function (x) { return x.key === k; })[0];
           return k + (o ? '. ' + o.text : '');
         }).join('　');
-        return '<div class="wrong-item" data-i="' + i + '">' +
+        return '<div class="wrong-item" data-i="' + i + '" data-id="' + q.id + '">' +
           '<div class="wi-stem">' + (i + 1) + '. ' + esc(q.stem) + '</div>' +
           '<div class="wi-ans">正确答案：' + esc(ansTxt) + '</div>' +
-          '<div class="wi-sub">做错 ' + (r.wrong || 0) + ' 次 · 已练 ' + (r.seen || 0) + ' 次 · 点按展开解析</div>' +
-          '<div class="wi-exp">' + esc(q.explanation || '（无解析）') + '</div></div>';
+          '<div class="wi-sub">做错 ' + (r.wrong || 0) + ' 次 · 已练 ' + (r.seen || 0) + ' 次 · 点按展开解析与操作</div>' +
+          '<div class="wi-exp">' + esc(q.explanation || '（无解析）') + '</div>' +
+          '<button class="wi-master" data-act="master">✓ 已掌握，移出错题本</button></div>';
       }).join('') || '<p class="hint">该题库暂无错题</p>';
       Array.prototype.forEach.call($('wrong-list').children, function (c) {
         if (!c.classList.contains('wrong-item')) return;
-        c.onclick = function () { c.classList.toggle('open'); };
+        c.onclick = function (e) {
+          if (e.target && e.target.getAttribute && e.target.getAttribute('data-act') === 'master') return;
+          c.classList.toggle('open');
+        };
+        var mb = c.querySelector('.wi-master');
+        if (mb) mb.onclick = function (e) {
+          if (e.stopPropagation) e.stopPropagation();
+          var qid = c.getAttribute('data-id');
+          App.toggleMastered(bid, qid).then(function () {
+            App.toast('已标记掌握，移出错题本');
+            renderWrong();
+          });
+        };
       });
     });
   }
@@ -1136,10 +1155,8 @@
       startPractice('practice');
     };
     $('btn-home-exam').onclick = function () { App.go('page-exam'); };
-    $('btn-home-wrong').onclick = function () {
-      App.sel.wrongBank = App.sel.homeBank;
-      App.go('page-wrong');
-    };
+    $('btn-home-wrong').onclick = gotoWrong;
+    $('sc-wrong').onclick = gotoWrong;
     $('btn-goto-stats').onclick = function () { App.go('page-stats'); };
     $('btn-home-detail').onclick = function () { openBank(App.sel.homeBank); };
 

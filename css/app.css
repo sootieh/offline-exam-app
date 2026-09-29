@@ -650,3 +650,15 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
   fill:none;stroke:var(--txt3);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .rc-restart{background:none;border:none;color:var(--txt2);font-size:13.5px;font-weight:600;cursor:pointer;
   padding:8px 6px;text-decoration:underline}
+
+/* 可点击的统计卡（当前错题 → 错题重做） */
+.stat-card.tappable{display:block;width:100%;text-align:left;font-family:var(--font);
+  transition:transform .13s cubic-bezier(.2,.8,.3,1)}
+.stat-card.tappable:active{transform:scale(.97)}
+.stat-card.tappable .sc-sub{color:var(--brand-d);font-weight:600}
+
+/* 错题项「已掌握」按钮 */
+.wi-master{display:none;margin-top:10px;width:100%;padding:10px 12px;border-radius:11px;
+  background:var(--green-l);color:var(--brand-d);font-size:14px;font-weight:600;border:none;cursor:pointer}
+.wrong-item.open .wi-master{display:block}
+.wi-master:active{opacity:.6}
