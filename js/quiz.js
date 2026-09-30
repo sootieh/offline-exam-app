@@ -86,12 +86,10 @@
       var sel = Array.isArray(st.v) ? st.v : (st.v ? [st.v] : []);
       el['qz-opts'].innerHTML = q.options.map(function (o) {
         var cls = 'opt';
-        if (sel.indexOf(o.key) >= 0) cls += ' sel';
-        if (st.done && S.mode !== 'exam') {
-          if (q.answer.indexOf(o.key) >= 0) cls += ' right';
-          else if (sel.indexOf(o.key) >= 0) cls += ' wrong';
-        }
-        if (S.mode === 'recite' ) cls += ' locked';   // 练习判分后仍可点选修改
+        if (sel.indexOf(o.key) >= 0) cls += ' sel';   // 高亮上次作答的选项
+        // 练习模式判分后不再标出正确/错误项（答案在折叠的解析卡里，且可随时修改）
+        // 只在背题模式直接标出正确项
+        if (S.mode === 'recite') cls += ' locked';
         if (S.mode === 'recite' && q.answer.indexOf(o.key) >= 0) cls += ' right locked';
         return '<button class="' + cls + '" data-k="' + esc(o.key) + '">' +
           '<span class="k' + (q.type === 'multiple' ? ' multi' : '') + '">' + esc(o.key) + '</span>' +
@@ -356,8 +354,16 @@
     S = null;
   }
 
+  /* 中途离开答题页（如直接点底部标签）：同样判分并保留进度 */
+  function leave() {
+    if (!S) return;
+    if (S.mode === 'practice') { autoSubmit(); saveSession(); }
+    stop();
+  }
+
   function back() {
     autoSubmit();     // 退出练习前把当前题判为已作答
+    if (S && S.mode === 'practice') saveSession();
     if (S && S.mode === 'exam' && !window.__examFinished) {
       if (!confirm('考试尚未交卷，退出后本次作答将不记录。确定退出？')) return;
     }
@@ -564,5 +570,5 @@
     } else if (S.i > 0) { autoSubmit(); S.i--; S.expOpen = false; render(); }
   }
 
-  window.Quiz = { start: start, stop: stop, bind: bind, readSession: readSession, resumeSession: resumeSession, clearSession: clearSession };
+  window.Quiz = { start: start, stop: stop, leave: leave, bind: bind, readSession: readSession, resumeSession: resumeSession, clearSession: clearSession };
 })();

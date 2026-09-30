@@ -218,6 +218,10 @@
   App.go = function (id) {
     if (id === 'page-banks') App.stack = [];
     var cur = document.querySelector('.page.active');
+    // 从答题页直接切走（未点「退出」）时也要收尾，否则进度与作答状态都悬在半空
+    if (cur && cur.id === 'page-quiz' && id !== 'page-quiz' && window.Quiz && window.Quiz.leave) {
+      window.Quiz.leave();
+    }
     if (cur && cur.id !== id && TABS.indexOf(cur.id) >= 0) App.lastPage = cur.id;
     if (cur && cur.id !== id && App.stack[App.stack.length - 1] !== cur.id) App.stack.push(cur.id);
     document.querySelectorAll('.page').forEach(function (p) { p.classList.remove('active'); });
@@ -431,7 +435,7 @@
   function renderPracResume() {
     var snap = Quiz.readSession ? Quiz.readSession() : null;
     var card = $('prac-resume');
-    var ok = snap && snap.bankId === App.sel.pracBank && (snap.i || 0) > 0;
+    var ok = snap && snap.bankId === App.sel.pracBank && ((snap.i || 0) > 0 || (snap.answered || 0) > 0);
     card.hidden = !ok;
     if (!ok) return;
     $('prac-resume-sub').textContent = '已答 ' + (snap.answered || 0) + ' / ' + (snap.total || 0) + ' 题';
@@ -506,7 +510,8 @@
   function renderResumeCard() {
     var snap = Quiz.readSession ? Quiz.readSession() : null;
     var card = $('resume-card');
-    if (!snap || !App.banks.some(function (b) { return b.id === snap.bankId; })) { card.hidden = true; return; }
+    if (!snap || !App.banks.some(function (b) { return b.id === snap.bankId; }) ||
+        ((snap.i || 0) === 0 && (snap.answered || 0) === 0)) { card.hidden = true; return; }
     card.hidden = false;
     $('resume-sub').textContent = '已答 ' + (snap.answered || 0) + ' / ' + (snap.total || 0) + ' 题';
   }
