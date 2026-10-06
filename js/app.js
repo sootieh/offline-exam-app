@@ -414,11 +414,22 @@
       return '<div class="qitem" data-id="' + q.id + '">' +
         '<div class="qi-head"><span class="' + cls + '">' + (q.idx + 1) + '</span>' +
         '<span class="qi-type ' + q.type + '">' + Parser.typeName(q.type) + '</span>' +
-        (r.fav ? '<span class="qi-fav">★</span>' : '') + '</div>' +
+        '<button class="qi-favbtn' + (r.fav ? ' on' : '') + '" data-act="fav" aria-label="收藏">' +
+        (r.fav ? '★' : '☆') + '</button></div>' +
         '<div class="qi-stem">' + esc(q.stem) + '</div></div>';
     }).join('') || '<div class="empty"><p>没有匹配的题目</p></div>';
     Array.prototype.forEach.call($('qlist').querySelectorAll('.qitem'), function (c) {
-      c.onclick = function () { openEdit(c.getAttribute('data-id')); };
+      c.onclick = function (e) {
+        if (e.target && e.target.getAttribute && e.target.getAttribute('data-act') === 'fav') return;
+        openEdit(c.getAttribute('data-id'));
+      };
+      var fb = c.querySelector('.qi-favbtn');
+      if (fb) fb.onclick = function (e) {
+        if (e.stopPropagation) e.stopPropagation();
+        App.toggleFav(App.curBank, c.getAttribute('data-id')).then(function () {
+          renderQlist();
+        });
+      };
     });
   }
   /* 全局题库：只在题库页下拉选择，浏览 / 刷题 / 错题页共用 */

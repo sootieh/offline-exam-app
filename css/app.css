@@ -666,3 +666,9 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
 /* 已作答提示（可修改） */
 .qz-redo{font-size:12.5px;color:var(--orange);background:var(--orange-l);
   padding:4px 9px;border-radius:7px;font-weight:500;white-space:nowrap}
+
+/* 题目列表：每题右上角的收藏按钮（点按即收藏/取消，不进编辑页） */
+.qi-favbtn{margin-left:auto;background:none;border:none;padding:2px 4px;font-size:17px;
+  line-height:1;color:var(--txt3);cursor:pointer;font-family:var(--font)}
+.qi-favbtn.on{color:var(--orange)}
+.qi-favbtn:active{transform:scale(1.25)}
