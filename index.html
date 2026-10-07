@@ -71,11 +71,11 @@
             <div class="sc-num" id="st-rate">0%</div>
             <div class="sc-sub" id="st-rate-sub">0 次作答</div>
           </div>
-          <div class="stat-card">
+          <button class="stat-card tappable" id="sc-fav">
             <div class="sc-head"><span class="sc-ico fav"><svg class="ico" viewBox="0 0 24 24"><path d="M12 3.6l2.5 5.2 5.7.7-4.2 3.9 1.1 5.6L12 16.2l-5.1 2.8 1.1-5.6-4.2-3.9 5.7-.7z"/></svg></span>收藏</div>
             <div class="sc-num" id="st-fav">0</div>
-            <div class="sc-sub">稍后重点复习</div>
-          </div>
+            <div class="sc-sub">点击查看收藏 ›</div>
+          </button>
         </div>
         <div class="block">
           <div class="blk-title">题型进度</div>
@@ -83,6 +83,7 @@
         </div>
         <button class="btn ghost big" id="btn-goto-stats" style="margin-bottom:4px">完整统计 →</button>
         <button class="btn ghost big" id="btn-home-detail">题目列表与管理</button>
+        <button class="btn ghost big" id="btn-home-manage">题库管理</button>
       </div>
       <div id="bank-empty" class="empty" hidden>
         <svg class="empty-ico" viewBox="0 0 24 24"><path d="M3.8 5.2h16.4a1.4 1.4 0 0 1 1.4 1.4v3.2a1.4 1.4 0 0 1-1.4 1.4H3.8a1.4 1.4 0 0 1-1.4-1.4V6.6a1.4 1.4 0 0 1 1.4-1.4z"/><path d="M4.6 11.2V18a2 2 0 0 0 2 2h10.8a2 2 0 0 0 2-2v-6.8"/><path d="M9.6 14.6h4.8"/></svg>
@@ -265,8 +266,29 @@ D. 管制
       <div id="wrong-body">
         <div class="block">
           <button class="btn primary big" id="btn-redo-wrong">重做错题</button>
+          <button class="btn danger big" id="btn-clear-wrong" style="margin-top:10px">清空错题</button>
         </div>
         <div id="wrong-list"></div>
+        <div class="pad"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 收藏 ============ -->
+  <section id="page-fav" class="page">
+    <header class="nav"><button class="nav-back" data-back><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4.5 7.5 12l7.5 7.5"/></svg></button><h1 class="nav-t">收藏</h1><span></span></header>
+    <div class="scroll">
+      <div class="lg-title">收藏</div>
+      <div id="fav-empty" class="empty" hidden>
+        <svg class="empty-ico" viewBox="0 0 24 24"><path d="M12 3.6l2.5 5.2 5.7.7-4.2 3.9 1.1 5.6L12 16.2l-5.1 2.8 1.1-5.6-4.2-3.9 5.7-.7z"/></svg>
+        <p>还没有收藏的题目</p>
+      </div>
+      <div id="fav-body">
+        <div class="block">
+          <button class="btn primary big" id="btn-prac-fav">练习收藏</button>
+          <button class="btn danger big" id="btn-clear-fav" style="margin-top:10px">清空收藏</button>
+        </div>
+        <div id="fav-list"></div>
         <div class="pad"></div>
       </div>
     </div>
@@ -392,7 +414,7 @@ D. 管制
         <div class="blk-title">关于</div>
         <div class="tip">
           <p>纯本地运行，所有数据存在你的手机浏览器里，不上传任何服务器。</p>
-          <p>版本号 1.12.3 · 离线可用 · 支持深色模式</p>
+          <p>版本号 1.13.0 · 离线可用 · 支持深色模式</p>
         </div>
       </div>
       <div class="pad"></div>
