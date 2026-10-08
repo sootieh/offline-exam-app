@@ -121,6 +121,24 @@
     </div>
   </section>
 
+  <!-- ============ 题库管理（统一视图） ============ -->
+  <section id="page-manage" class="page">
+    <header class="nav"><button class="nav-back" data-back><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4.5 7.5 12l7.5 7.5"/></svg></button><h1 class="nav-t">题库管理</h1><span></span></header>
+    <div class="scroll">
+      <div class="lg-title">题库管理</div>
+      <p class="hint mg-hint">按住右侧 <b>⠿</b> 拖动可调整顺序（排序会影响题库下拉框的排列）。</p>
+      <div id="mg-list" class="mg-list"></div>
+      <div class="block" style="margin-top:14px">
+        <button class="btn primary big" id="btn-mg-import">
+          <svg class="ico" viewBox="0 0 24 24"><path d="M12 4v11"/><path d="M7.6 10.4 12 14.8l4.4-4.4"/><path d="M5 18.5h14"/></svg>导入题库</button>
+      </div>
+      <div id="mg-empty" class="empty" hidden>
+        <p>还没有题库</p>
+      </div>
+      <div class="pad"></div>
+    </div>
+  </section>
+
   <!-- ============ 导入 ============ -->
   <section id="page-import" class="page">
     <header class="nav">
@@ -414,7 +432,7 @@ D. 管制
         <div class="blk-title">关于</div>
         <div class="tip">
           <p>纯本地运行，所有数据存在你的手机浏览器里，不上传任何服务器。</p>
-          <p>版本号 1.13.0 · 离线可用 · 支持深色模式</p>
+          <p>版本号 1.14.0 · 离线可用 · 支持深色模式</p>
         </div>
       </div>
       <div class="pad"></div>

@@ -59,7 +59,22 @@
     /* ---------------- 题库 ---------------- */
     listBanks: function () {
       return req2p(tx('banks').objectStore('banks').getAll()).then(function (list) {
-        return list.sort(function (a, b) { return b.createdAt - a.createdAt; });
+        // sort 为手动排序权重（越大越靠前，仅在题库管理页拖动后才写入）；
+        // 未排过序的题库用 createdAt 兜底，保持「新建的在前」
+        var key = function (b) { return typeof b.sort === 'number' ? b.sort : b.createdAt; };
+        return list.sort(function (a, b) { return key(b) - key(a); });
+      });
+    },
+    setBankSort: function (orders) {
+      // orders: [{id, sort}] —— 一次性写回排序权重（先读全部再单事务写入，避免事务提前提交）
+      var map = {};
+      orders.forEach(function (o) { map[o.id] = o.sort; });
+      return req2p(tx('banks').objectStore('banks').getAll()).then(function (list) {
+        var t = tx('banks', 'readwrite'), st = t.objectStore('banks');
+        list.forEach(function (b) {
+          if (map[b.id] != null) { b.sort = map[b.id]; st.put(b); }
+        });
+        return done(t);
       });
     },
     getBank: function (id) { return req2p(tx('banks').objectStore('banks').get(id)); },

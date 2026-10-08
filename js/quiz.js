@@ -309,7 +309,7 @@
   function clearSession() {
     try { localStorage.removeItem(SESS_KEY); } catch (e) { }
   }
-  function resumeSession() {
+  function resumeSession(quiet) {
     var snap = readSession();
     if (!snap || !snap.qids || !snap.qids.length) { App.toast('没有未完成的练习'); return; }
     DB.getQuestions(snap.bankId).then(function (all) {
@@ -344,7 +344,7 @@
       clearInterval(timer);
       App.go('page-quiz');
       render();
-      App.toast('已回到第 ' + (S.i + 1) + ' 题');
+      if (!quiet) App.toast('已回到第 ' + (S.i + 1) + ' 题');
     });
   }
 
