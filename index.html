@@ -115,6 +115,15 @@
       </div>
       <div class="search-row">
         <input id="q-search" class="input" placeholder="搜索题干关键词…">
+        <button id="btn-shot" class="shot-btn" aria-label="拍照搜题">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.2 8.6h2.4l1.2-2h4.4l1.2 2h2.4a1.6 1.6 0 0 1 1.6 1.6v7.8a1.6 1.6 0 0 1-1.6 1.6H4.2a1.6 1.6 0 0 1-1.6-1.6v-7.8a1.6 1.6 0 0 1 1.6-1.6z"/><circle cx="10.6" cy="13.6" r="3.1"/></svg>
+        </button>
+        <input id="shot-file" type="file" accept="image/*" capture="camera" hidden>
+      </div>
+      <div id="shot-bar" class="shot-bar" hidden>
+        <svg class="ico shot-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.2 8.6h2.4l1.2-2h4.4l1.2 2h2.4a1.6 1.6 0 0 1 1.6 1.6v7.8a1.6 1.6 0 0 1-1.6 1.6H4.2a1.6 1.6 0 0 1-1.6-1.6v-7.8a1.6 1.6 0 0 1 1.6-1.6z"/><circle cx="10.6" cy="13.6" r="3.1"/></svg>
+        <span class="shot-t"><b id="shot-text">拍照识别</b><i id="shot-cnt"></i></span>
+        <button id="shot-clear" class="shot-x" aria-label="清除识别结果">清除</button>
       </div>
       <div id="qlist" class="qlist"></div>
       <div class="pad"></div>
@@ -412,6 +421,14 @@ D. 管制
         <p class="hint">三个开关即时生效并自动记住。滑动翻题与页面滚动智能共存：内容还能滚动时先滚动，滚到边缘才翻题。</p>
       </div>
       <div class="block">
+        <div class="blk-title">拍照搜题</div>
+        <div class="set-row">
+          <div class="sr-txt"><div class="sr-t">离线识别模型</div><div class="sr-s" id="ocr-state">未下载</div></div>
+          <button class="sr-btn" id="btn-ocr">下载</button>
+        </div>
+        <p class="hint">在题库页搜索框右侧点相机图标拍照，自动识别题干文字并按相似度搜索。模型约 8.8MB，首次拍照时会自动下载，下载后永久离线可用；也可在这里提前下载或删除。</p>
+      </div>
+      <div class="block">
         <div class="blk-title">数据备份</div>
         <button class="btn ghost big" id="btn-export">导出全部数据（JSON）</button>
         <button class="btn ghost big" id="btn-import-bak" style="margin-top:10px">从备份恢复</button>
@@ -432,7 +449,7 @@ D. 管制
         <div class="blk-title">关于</div>
         <div class="tip">
           <p>纯本地运行，所有数据存在你的手机浏览器里，不上传任何服务器。</p>
-          <p>版本号 1.14.0 · 离线可用 · 支持深色模式</p>
+          <p>版本号 1.15.0 · 离线可用 · 支持深色模式</p>
         </div>
       </div>
       <div class="pad"></div>
@@ -554,11 +571,23 @@ D. 管制
   </nav>
 
   <div class="toast" id="toast" hidden></div>
+
+  <!-- 拍照搜题：下载模型 / 识别进度 -->
+  <div class="ocr-mask" id="ocr-mask" hidden>
+    <div class="ocr-card">
+      <div class="ocr-spin" aria-hidden="true"></div>
+      <div class="ocr-t" id="ocr-t">正在识别…</div>
+      <div class="ocr-s" id="ocr-s">首次使用需要加载识别模型，约需十几秒</div>
+      <div class="ocr-bar"><i id="ocr-bar"></i></div>
+      <button class="ocr-cancel" id="ocr-cancel">取消</button>
+    </div>
+  </div>
 </div>
 
 <script src="js/store.js" defer></script>
 <script src="js/parser.js" defer></script>
 <script src="js/quiz.js" defer></script>
+<script src="js/ocr.js" defer></script>
 <script src="js/app.js" defer></script>
 </body>
 </html>

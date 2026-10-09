@@ -208,6 +208,7 @@
       examBank: null, examTime: '60', examSrc: 'all', examTypes: {}
     },
     pending: null,        // 待导入题目
+    fuzzy: false,         // 搜索处于「拍照识别模糊匹配」模式
     sheets: null,         // Excel 多工作表：[{name, questions, on}]
     sheetMode: 'merge',   // merge | split
     lastWarn: [],
@@ -395,6 +396,7 @@
 
   function openBank(id) {
     App.curBank = id;
+    if (App.fuzzy) { App.fuzzy = false; var sb = $('shot-bar'); if (sb) sb.hidden = true; }
     Promise.all([DB.getQuestions(id), DB.getRecords(id), DB.getBank(id)]).then(function (r) {
       App.qs = r[0]; App.recs = r[1];
       var b = r[2] || {};
@@ -412,23 +414,36 @@
   }
 
   function renderQlist() {
-    var kw = ($('q-search').value || '').trim().toLowerCase();
-    var list = App.qs;
-    if (kw) list = list.filter(function (q) {
-      return q.stem.toLowerCase().indexOf(kw) >= 0 ||
-        (q.options || []).some(function (o) { return o.text.toLowerCase().indexOf(kw) >= 0; });
-    });
+    var raw = ($('q-search').value || '').trim();
+    var kw = raw.toLowerCase();
+    var list = App.qs, sims = null;
+    /* 拍照搜题：按相似度模糊排序 */
+    if (App.fuzzy && raw && window.OCR) {
+      var scored = OCR.match(App.qs, raw, 40);
+      sims = {};
+      list = scored.map(function (x) { sims[x.q.id] = x.s; return x.q; });
+    } else if (kw) {
+      list = App.qs.filter(function (q) {
+        return q.stem.toLowerCase().indexOf(kw) >= 0 ||
+          (q.options || []).some(function (o) { return o.text.toLowerCase().indexOf(kw) >= 0; });
+      });
+    }
+    if (App.fuzzy && raw && $('shot-cnt')) {
+      $('shot-cnt').textContent = list.length ? ('模糊匹配到 ' + list.length + ' 条') : '没找到相近的题目';
+    }
     $('qlist').innerHTML = list.map(function (q) {
       var r = App.recs[q.id] || {};
       var cls = 'qi-no';
       if (r.seen) cls += (r.wrong > 0 && !(r.right > 0)) ? ' wrong' : ' right';
+      var sim = sims && sims[q.id] != null
+        ? '<span class="qi-sim">' + Math.round(sims[q.id] * 100) + '%</span>' : '';
       return '<div class="qitem" data-id="' + q.id + '">' +
         '<div class="qi-head"><span class="' + cls + '">' + (q.idx + 1) + '</span>' +
-        '<span class="qi-type ' + q.type + '">' + Parser.typeName(q.type) + '</span>' +
+        '<span class="qi-type ' + q.type + '">' + Parser.typeName(q.type) + '</span>' + sim +
         '<button class="qi-favbtn' + (r.fav ? ' on' : '') + '" data-act="fav" aria-label="收藏">' +
         (r.fav ? '★' : '☆') + '</button></div>' +
         '<div class="qi-stem">' + esc(q.stem) + '</div></div>';
-    }).join('') || '<div class="empty"><p>没有匹配的题目</p></div>';
+    }).join('') || '<div class="empty"><p>' + (App.fuzzy && raw ? '没有相似的题目，可修改上方关键词再试' : '没有匹配的题目') + '</p></div>';
     Array.prototype.forEach.call($('qlist').querySelectorAll('.qitem'), function (c) {
       c.onclick = function (e) {
         if (e.target && e.target.getAttribute && e.target.getAttribute('data-act') === 'fav') return;
@@ -443,6 +458,94 @@
       };
     });
   }
+  /* ================= 拍照搜题（本地 OCR，全离线） ================= */
+  var ocrAbort = false;
+  function setOcrBar(p) {
+    var b = $('ocr-bar');
+    if (b) b.style.width = Math.round(Math.max(0, Math.min(1, p || 0)) * 100) + '%';
+  }
+  function showOcr(t, s, p) {
+    var m = $('ocr-mask'); if (!m) return;
+    ocrAbort = false;
+    $('ocr-t').textContent = t || '请稍候…';
+    $('ocr-s').textContent = s || '';
+    setOcrBar(p || 0);
+    m.hidden = false;
+  }
+  function setOcr(t, s, p) {
+    var m = $('ocr-mask'); if (!m || m.hidden) return;
+    if (t) $('ocr-t').textContent = t;
+    if (s != null) $('ocr-s').textContent = s;
+    if (p != null) setOcrBar(p);
+  }
+  function hideOcr() { var m = $('ocr-mask'); if (m) m.hidden = true; }
+
+  function ocrStage(m) {
+    var st = (m && m.status) || '', p = (m && m.progress) || 0;
+    if (st === 'recognizing text') return ['正在识别文字 ' + Math.round(p * 100) + '%', '', 0.55 + p * 0.42];
+    if (st === 'loading language traineddata') return ['正在装载中文模型 ' + Math.round(p * 100) + '%', '', 0.36 + p * 0.16];
+    if (st === 'initializing api') return ['正在初始化识别引擎…', '', 0.52];
+    if (st === 'loading tesseract core') return ['正在加载识别核心…', '', 0.2 + p * 0.12];
+    if (st === 'initializing tesseract') return ['正在启动识别引擎…', '', 0.33];
+    return ['正在识别…', '', 0.5];
+  }
+
+  function runShot(file) {
+    if (!window.OCR) { App.toast('识别模块未加载，请刷新页面重试'); return; }
+    var needDl = !OCR.ready();
+    showOcr('正在读取照片…', needDl ? '首次使用还需下载约 8.8MB 识别模型' : '', 0.01);
+    OCR.prepare(file, 1600).then(function (cv) {
+      if (ocrAbort) throw new Error('__abort__');
+      if (!needDl) return cv;
+      setOcr('正在下载识别模型…', '下载一次后永久离线可用', 0.02);
+      return OCR.download(function (p) {
+        if (ocrAbort) throw new Error('__abort__');
+        setOcr('正在下载识别模型 ' + Math.round(p * 100) + '%', '下载一次后永久离线可用', 0.02 + p * 0.45);
+      }).then(function () { return cv; });
+    }).then(function (cv) {
+      if (ocrAbort) throw new Error('__abort__');
+      setOcr('正在准备识别…', needDl ? '首次识别需装载模型，请稍候' : '', 0.48);
+      return OCR.recognize(cv, function (m) {
+        var st = ocrStage(m);
+        setOcr(st[0], st[1], st[2]);
+      });
+    }).then(function (text) {
+      hideOcr();
+      if (ocrAbort) { App.toast('已取消'); return; }
+      applyShot(text);
+    }).catch(function (err) {
+      hideOcr();
+      var msg = (err && err.message) || String(err);
+      if (msg === '__abort__') { App.toast('已取消'); return; }
+      App.toast('识别失败：' + msg.slice(0, 30) + '，可手动输入关键词');
+    });
+  }
+
+  function applyShot(text) {
+    var kw = window.OCR ? OCR.norm(text) : '';
+    if (!kw) { App.toast('没识别出文字，请手动输入关键词'); return; }
+    App.fuzzy = true;
+    $('q-search').value = kw;
+    $('shot-text').textContent = '识别到：' + (OCR.tidy(text).slice(0, 26) || kw.slice(0, 26));
+    $('shot-bar').hidden = false;
+    renderQlist();
+  }
+
+  function clearShot() {
+    App.fuzzy = false;
+    $('q-search').value = '';
+    $('shot-bar').hidden = true;
+    renderQlist();
+  }
+
+  function renderOcrState() {
+    var b = $('btn-ocr'), s = $('ocr-state');
+    if (!b || !window.OCR) return;
+    var mb = (OCR.bytes / 1048576).toFixed(1);
+    if (OCR.ready()) { s.textContent = '已下载（约 ' + mb + 'MB，离线可用）'; b.textContent = '删除'; }
+    else { s.textContent = '未下载（约 ' + mb + 'MB）'; b.textContent = '下载'; }
+  }
+
   /* 全局题库：只在题库页下拉选择，浏览 / 刷题 / 错题页共用 */
   function setGlobalBank(bid) {
     App.sel.homeBank = bid;
@@ -1433,6 +1536,34 @@
 
     // 题库详情
     $('q-search').oninput = renderQlist;
+    $('btn-shot').onclick = function () { $('shot-file').click(); };
+    $('shot-file').onchange = function (e) {
+      var f = e.target.files && e.target.files[0];
+      e.target.value = '';
+      if (f) runShot(f);
+    };
+    $('shot-clear').onclick = clearShot;
+    $('ocr-cancel').onclick = function () { ocrAbort = true; hideOcr(); App.toast('已取消'); };
+    $('btn-ocr').onclick = function () {
+      if (!window.OCR) return;
+      if (OCR.ready()) {
+        if (!window.confirm('删除拍照搜题的离线识别模型？下次拍照需要重新下载。')) return;
+        OCR.remove().then(function () { renderOcrState(); App.toast('识别模型已删除'); });
+        return;
+      }
+      showOcr('正在下载识别模型…', '下载一次后永久离线可用', 0.01);
+      OCR.download(function (p) {
+        if (ocrAbort) throw new Error('__abort__');
+        setOcr('正在下载识别模型 ' + Math.round(p * 100) + '%', '下载一次后永久离线可用', p);
+      }).then(function () {
+        hideOcr(); renderOcrState(); App.toast('识别模型已下载，可以拍照搜题了');
+      }).catch(function (err) {
+        hideOcr();
+        var msg = (err && err.message) || String(err);
+        if (msg !== '__abort__') App.toast('下载失败：' + msg.slice(0, 30));
+      });
+    };
+    renderOcrState();
     $('btn-bank-more').onclick = function () {
       if (App.curBank) bankMenu(App.curBank);
     };

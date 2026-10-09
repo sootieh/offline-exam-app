@@ -1,5 +1,5 @@
 /* 离线缓存：首次打开后即可断网使用 */
-var CACHE = 'examapp-v28';
+var CACHE = 'examapp-v29';
 var ICON_VARIANTS = [
   'check-wx', 'check-zfb', 'check-ha', 'check-white',
   'star-wx', 'star-zfb', 'star-ha', 'star-white',
@@ -12,6 +12,7 @@ var ASSETS = [
   './js/store.js',
   './js/parser.js',
   './js/quiz.js',
+  './js/ocr.js',
   './js/app.js',
   './vendor/xlsx.full.min.js',
   './vendor/fflate.min.js'
@@ -58,6 +59,14 @@ self.addEventListener('fetch', function (e) {
   var req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
   var url = new URL(req.url);
+
+  /* 拍照搜题的 OCR 资源（约 8.8MB）按需下载，命中缓存就直接返回，
+     绝不后台重新拉取，否则每次识别都要再下几 MB */
+  if (/\/vendor\/ocr\//.test(url.pathname)) {
+    e.respondWith(caches.match(req).then(function (hit) { return hit || fetch(req); }));
+    return;
+  }
+
   var isCode = req.mode === 'navigate' || /\.(html|js|css|json|webmanifest)$/.test(url.pathname) ||
     url.pathname === './' || url.pathname.slice(-1) === '/';
 

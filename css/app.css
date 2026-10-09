@@ -245,7 +245,32 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
 .qa-ico .ico{width:24px;height:24px;stroke-width:1.7}
 .qa.wrong .qa-ico{color:var(--red)}
 .qa.recite .qa-ico{color:var(--purple)}
-.search-row{margin-bottom:14px}
+.search-row{margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.search-row .input{flex:1;min-width:0}
+.shot-btn{flex:0 0 auto;width:46px;height:46px;border-radius:13px;border:none;cursor:pointer;
+  background:var(--card);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  box-shadow:var(--sh);color:var(--brand);display:flex;align-items:center;justify-content:center;font-family:var(--font)}
+.shot-btn .ico{width:23px;height:23px;stroke-width:1.6}
+.shot-btn:active{transform:scale(.93);opacity:.8}
+
+/* 拍照识别结果条 */
+.shot-bar{display:flex;align-items:center;gap:8px;margin:-4px 0 12px;padding:9px 12px;
+  border-radius:var(--r-s);background:var(--brand-l);box-shadow:none}
+.shot-bar[hidden]{display:none}
+.shot-ico{width:17px;height:17px;flex:0 0 auto;color:var(--brand);stroke-width:1.7}
+.shot-t{flex:1;min-width:0;font-size:13px;color:var(--txt2);line-height:1.4;
+  display:flex;flex-direction:column;gap:1px}
+.shot-t b{font-weight:600;color:var(--brand-d);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.shot-t i{font-style:normal;font-size:12px;color:var(--txt3)}
+.shot-x{flex:0 0 auto;font-size:13px;font-weight:600;color:var(--brand-d);background:none;border:none;
+  padding:5px 2px;cursor:pointer;font-family:var(--font)}
+.shot-x:active{opacity:.6}
+
+/* 设置行里的小按钮 */
+.sr-btn{flex:0 0 auto;font-size:13.5px;font-weight:600;padding:7px 13px;border-radius:10px;
+  border:1.5px solid var(--sep);background:var(--card);color:var(--brand-d);cursor:pointer;
+  white-space:nowrap;font-family:var(--font)}
+.sr-btn:active{opacity:.6}
 .qlist{display:flex;flex-direction:column;gap:10px}
 .qitem{background:var(--card);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
   border-radius:var(--r-s);padding:14px;box-shadow:var(--sh);position:relative;
@@ -668,6 +693,9 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
   padding:4px 9px;border-radius:7px;font-weight:500;white-space:nowrap}
 
 /* 题目列表：每题右上角的收藏按钮（点按即收藏/取消，不进编辑页） */
+.qi-sim{margin-left:auto;font-size:11px;padding:3px 7px;border-radius:6px;font-weight:600;
+  background:var(--brand-l);color:var(--brand-d);font-variant-numeric:tabular-nums}
+.qi-sim+.qi-favbtn{margin-left:0}
 .qi-favbtn{margin-left:auto;background:none;border:none;padding:2px 4px;font-size:17px;
   line-height:1;color:var(--txt3);cursor:pointer;font-family:var(--font)}
 .qi-favbtn.on{color:var(--orange)}
@@ -688,6 +716,24 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
 .mg-act:active{opacity:.6}
 .mg-drag{font-size:19px;line-height:1;color:var(--txt3);padding:6px 4px;cursor:grab;touch-action:none}
 .mg-drag:active{cursor:grabbing}
+
+/* 拍照搜题：下载模型 / 识别进度遮罩 */
+.ocr-mask{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;
+  background:rgba(20,19,16,.42);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.ocr-mask[hidden]{display:none}
+.ocr-card{width:min(300px,84vw);background:var(--card-solid);border-radius:20px;padding:26px 22px 18px;
+  text-align:center;box-shadow:var(--sh-lg)}
+.ocr-spin{width:34px;height:34px;margin:0 auto 14px;border-radius:50%;
+  border:3px solid var(--brand-l);border-top-color:var(--brand);animation:ocrspin .9s linear infinite}
+@keyframes ocrspin{to{transform:rotate(360deg)}}
+.ocr-t{font-size:15.5px;font-weight:600;color:var(--txt);line-height:1.4}
+.ocr-s{font-size:12.5px;color:var(--txt3);margin-top:6px;line-height:1.55}
+.ocr-bar{height:5px;border-radius:3px;background:var(--fill);margin:14px 0 4px;overflow:hidden}
+.ocr-bar i{display:block;height:100%;width:0;border-radius:3px;background:var(--brand);
+  transition:width .25s ease}
+.ocr-cancel{margin-top:12px;border:none;background:none;color:var(--txt2);font-size:14px;
+  padding:8px 12px;cursor:pointer;font-family:var(--font)}
+.ocr-cancel:active{opacity:.6}
 
 /* 可带操作按钮的 toast（如「已继续上次进度 · 重新开始」） */
 #toast:not([hidden]){display:flex;align-items:center;gap:12px}
