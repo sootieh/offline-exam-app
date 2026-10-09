@@ -101,7 +101,25 @@ console.log('\n[7] 资源文件');
     ok('vendor/ocr/' + f + '（' + Math.round(sz / 1024) + 'KB）', sz > 1000);
   });
 
-console.log('\n[8] DOM 引用完整性（app.js 取用的 id 必须在 HTML 中存在）');
+console.log('\n[8] 题库管理：勾选多选 + 底部四按钮');
+['btn-mg-merge', 'btn-mg-del', 'btn-mg-rename', 'btn-mg-import', 'mg-sel-n']
+  .forEach(id => ok('底部按钮 #' + id, html.includes('id="' + id + '"')));
+ok('每行渲染复选框', app.includes('class="mg-check') && app.includes('data-act="check"'));
+ok('点按整行切换勾选', app.includes('row.onclick = function'));
+ok('拖动手柄不触发勾选', app.includes("closest('[data-act=\"drag\"]')"));
+ok('选中数量驱动按钮状态', app.includes('function paintMgActs'));
+ok('合并需 ≥2 个', app.includes('合并请先勾选至少 2 个题库'));
+ok('删除/重命名绑定勾选列表',
+  app.includes("$('btn-mg-del').onclick") && app.includes("$('btn-mg-rename').onclick"));
+ok('多选删除逐个执行', app.includes('function confirmDeleteBank(ids)'));
+ok('批量合并逐个复制', app.includes('function mergeOne(') && app.includes('function doMerge(ids, targetId)'));
+ok('新增重命名入口', app.includes('function renameBank(ids)'));
+ok('行内旧按钮已移除', !app.includes('data-act="merge">合并') && !app.includes('data-act="del">删除'));
+ok('进入管理页清空勾选', app.includes("if (id === 'page-manage') { App.mgSel = {};"));
+['.mg-check', '.mg-acts', '.mg-btn', '.mg-sel-n', '.mg-row.on']
+  .forEach(c => ok('样式 ' + c, css.includes(c)));
+
+console.log('\n[9] DOM 引用完整性（app.js 取用的 id 必须在 HTML 中存在）');
 const DYNAMIC = ['toast-act', 'btn-demo', 'exam-total'];   // 运行时动态插入的元素
 const ids = new Set();
 let m;

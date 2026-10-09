@@ -717,6 +717,26 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
 .mg-drag{font-size:19px;line-height:1;color:var(--txt3);padding:6px 4px;cursor:grab;touch-action:none}
 .mg-drag:active{cursor:grabbing}
 
+/* 题库管理：勾选多选 + 底部四个操作按钮 */
+.mg-check{flex:0 0 auto;width:24px;height:24px;border-radius:50%;padding:0;border:1.6px solid var(--sep-hard);
+  background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:background .15s,border-color .15s}
+.mg-check .ico{width:15px;height:15px;stroke:transparent;stroke-width:2.6;fill:none}
+.mg-check.on{background:var(--brand);border-color:var(--brand)}
+.mg-check.on .ico{stroke:#fff}
+.mg-row.on{background:var(--brand-l);border-color:var(--brand)}
+.mg-sel-n{font-size:12.5px;color:var(--txt3);text-align:center;margin:13px 0 8px}
+.mg-sel-n.on{color:var(--brand-d);font-weight:600}
+.mg-acts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.mg-btn{padding:12px 4px;border-radius:13px;border:1.5px solid var(--sep);background:var(--card-solid);
+  color:var(--txt);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);white-space:nowrap;
+  transition:transform .12s cubic-bezier(.2,.8,.3,1)}
+.mg-btn:active{transform:scale(.95);opacity:.85}
+.mg-btn:disabled{opacity:.36;cursor:default}
+.mg-btn:disabled:active{transform:none}
+.mg-btn.del{color:var(--red);border-color:rgba(214,69,69,.3)}
+.mg-btn.primary{background:var(--brand);color:#fff;border-color:transparent;box-shadow:0 2px 8px var(--brand-t)}
+
 /* 拍照搜题：下载模型 / 识别进度遮罩 */
 .ocr-mask{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;
   background:rgba(20,19,16,.42);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}

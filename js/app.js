@@ -239,7 +239,7 @@
     if (id === 'page-practice') renderPractice();
     if (id === 'page-wrong') renderWrong();
     if (id === 'page-fav') renderFav();
-    if (id === 'page-manage') renderManage();
+    if (id === 'page-manage') { App.mgSel = {}; renderManage(); }
     if (id === 'page-exam') renderExam();
     if (id === 'page-stats') renderStats();
   };
@@ -578,32 +578,74 @@
   /* ================= 题库管理（统一视图） ================= */
   function openBankManager() { App.go('page-manage'); }
 
+  function mgSelIds() {
+    if (!App.mgSel) App.mgSel = {};
+    return App.banks.filter(function (b) { return !!App.mgSel[b.id]; }).map(function (b) { return b.id; });
+  }
+  function mgToggle(bid) {
+    if (!App.mgSel) App.mgSel = {};
+    if (App.mgSel[bid]) delete App.mgSel[bid]; else App.mgSel[bid] = 1;
+    var row = $('mg-list').querySelector('.mg-row[data-id="' + bid + '"]');
+    var on = !!App.mgSel[bid];
+    if (row) {
+      row.classList.toggle('on', on);
+      var ck = row.querySelector('.mg-check');
+      if (ck) ck.classList.toggle('on', on);
+    }
+    paintMgActs();
+  }
+  /* 底部四个按钮的可用状态随选中数量变化 */
+  function paintMgActs() {
+    var n = mgSelIds().length;
+    var cnt = $('mg-sel-n');
+    if (cnt) {
+      cnt.textContent = n ? ('已选 ' + n + ' 个题库') : '未选择题库';
+      cnt.classList.toggle('on', n > 0);
+    }
+    var m = $('btn-mg-merge'), d = $('btn-mg-del'), r = $('btn-mg-rename');
+    if (m) { m.disabled = n < 2; m.textContent = n >= 2 ? '合并 (' + n + ')' : '合并'; }
+    if (d) { d.disabled = n < 1; d.textContent = n ? '删除 (' + n + ')' : '删除'; }
+    if (r) { r.disabled = n !== 1; r.textContent = '重命名'; }
+  }
+
   function renderManage() {
     var list = $('mg-list');
+    if (!App.mgSel) App.mgSel = {};
     if (!App.banks.length) {
       list.innerHTML = '';
       $('mg-empty').hidden = false;
+      paintMgActs();
       return;
     }
     $('mg-empty').hidden = true;
     list.innerHTML = App.banks.map(function (b) {
       var doneSession = (App.records[b.id] && Object.keys(App.records[b.id]).length) || 0;
-      return '<div class="mg-row" data-id="' + b.id + '">' +
+      var on = App.mgSel[b.id] ? ' on' : '';
+      return '<div class="mg-row' + on + '" data-id="' + b.id + '">' +
+        '<button class="mg-check' + on + '" data-act="check" aria-label="选择题库">' +
+        '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.4 9.4 16.8 19 7.2"/></svg></button>' +
         '<div class="mg-main"><div class="mg-name">' + esc(b.name) + '</div>' +
         '<div class="mg-sub">' + (App.counts[b.id] || 0) + ' 题 · 已练 ' + doneSession + ' 题</div></div>' +
-        '<button class="mg-act" data-act="merge">合并</button>' +
-        '<button class="mg-act del" data-act="del">删除</button>' +
         '<div class="mg-drag" data-act="drag" aria-label="拖动排序">⠿</div></div>';
     }).join('');
     Array.prototype.forEach.call(list.querySelectorAll('.mg-row'), function (row) {
       var bid = row.getAttribute('data-id');
-      var mergeBtn = row.querySelector('[data-act="merge"]');
-      var delBtn = row.querySelector('[data-act="del"]');
+      var checkBtn = row.querySelector('[data-act="check"]');
       var handle = row.querySelector('[data-act="drag"]');
-      if (mergeBtn) mergeBtn.onclick = function (e) { e.stopPropagation(); pickMergeTarget(bid); };
-      if (delBtn) delBtn.onclick = function (e) { e.stopPropagation(); confirmDeleteBank(bid); };
+      var toggle = function () { mgToggle(bid); };
+      row.onclick = function (e) {
+        var t = e.target;
+        // 拖动手柄不触发选中
+        if (t && t.closest && t.closest('[data-act="drag"]')) return;
+        toggle();
+      };
+      if (checkBtn) checkBtn.onclick = function (e) {
+        if (e.stopPropagation) e.stopPropagation();
+        toggle();
+      };
       if (handle) bindDrag(row, handle);
     });
+    paintMgActs();
   }
 
   /* 拖动排序（指针事件，兼容触摸与鼠标） */
@@ -650,59 +692,99 @@
   }
   App.saveBankOrder = saveBankOrder;
 
-  function pickMergeTarget(srcId) {
-    var src = App.banks.filter(function (b) { return b.id === srcId; })[0];
-    if (!src) return;
-    var others = App.banks.filter(function (b) { return b.id !== srcId; });
-    if (!others.length) { App.toast('至少需要两个题库才能合并'); return; }
-    showActionSheet('把「' + src.name + '」并入哪个题库', others.map(function (b) {
-      return { act: 'b:' + b.id, label: bankLabel(b), icon: 'merge' };
-    }), function (act) { doMerge(srcId, act.slice(2)); });
+  function pickMergeTarget(ids) {
+    if (!ids || ids.length < 2) { App.toast('合并请先勾选至少 2 个题库'); return; }
+    showActionSheet('把勾选的 ' + ids.length + ' 个题库并入哪个题库', App.banks.map(function (b) {
+      var mark = ids.indexOf(b.id) >= 0 ? '（已勾选）' : '';
+      return { act: 'b:' + b.id, label: bankLabel(b) + mark, icon: 'merge' };
+    }), function (act) { doMerge(ids, act.slice(2)); });
   }
 
-  function confirmDeleteBank(id) {
-    var b = App.banks.filter(function (x) { return x.id === id; })[0];
-    if (!b) return;
-    if (!confirm('确定删除题库「' + b.name + '」？\n\n其中的 ' + (App.counts[b.id] || 0) +
-      ' 道题目和答题记录将一并删除，此操作不可恢复。')) return;
-    DB.deleteBank(b.id).then(refresh).then(function () {
-      if (App.curBank === b.id) {
-        App.curBank = null;
-        if ($('page-bank').classList.contains('active')) App.go('page-banks');
-      }
+  function confirmDeleteBank(ids) {
+    var bs = App.banks.filter(function (b) { return ids.indexOf(b.id) >= 0; });
+    if (!bs.length) return;
+    var total = bs.reduce(function (s, b) { return s + (App.counts[b.id] || 0); }, 0);
+    var names = bs.map(function (b) { return b.name; }).join('、');
+    if (!confirm('确定删除 ' + bs.length + ' 个题库？\n\n' + names +
+      '\n\n共 ' + total + ' 道题目及答题记录将一并删除，此操作不可恢复。')) return;
+    var chain = Promise.resolve();
+    bs.forEach(function (b) {
+      chain = chain.then(function () {
+        return DB.deleteBank(b.id).then(function () {
+          if (App.curBank === b.id) {
+            App.curBank = null;
+            if ($('page-bank').classList.contains('active')) App.go('page-banks');
+          }
+        });
+      });
+    });
+    chain.then(refresh).then(function () {
       App.sel.pracBank = null; App.sel.examBank = null;
       App.sel.homeBank = App.banks.length ? App.banks[0].id : null;
-      App.toast('已删除题库');
+      App.mgSel = {};
+      App.toast('已删除 ' + bs.length + ' 个题库');
       renderManage();
       renderBanks();
     });
   }
 
-  function doMerge(srcId, targetId) {
-    var src = App.banks.filter(function (b) { return b.id === srcId; })[0];
-    var tgt = App.banks.filter(function (b) { return b.id === targetId; })[0];
-    if (!src || !tgt) return;
-    Promise.all([DB.getQuestions(srcId), DB.getQuestions(targetId)]).then(function (r) {
+  function renameBank(ids) {
+    var b = App.banks.filter(function (x) { return ids.indexOf(x.id) >= 0; })[0];
+    if (!b) return;
+    var name = prompt('重命名题库', b.name);
+    if (name == null) return;
+    name = String(name).trim();
+    if (!name || name === b.name) return;
+    DB.renameBank(b.id, name).then(refresh).then(function () {
+      App.mgSel = {};
+      App.toast('已重命名为「' + name + '」');
+      renderManage();
+      renderBanks();
+    });
+  }
+
+  /* 把一个题库的题目复制进目标题库，返回复制的题数 */
+  function mergeOne(srcId, targetId) {
+    return Promise.all([DB.getQuestions(srcId), DB.getQuestions(targetId)]).then(function (r) {
       var list = r[0] || [], exist = r[1] || [];
-      if (!list.length) { App.toast('「' + src.name + '」没有题目'); return; }
+      if (!list.length) return 0;
       var copy = list.map(function (q, i) {
         var c = {};
         Object.keys(q).forEach(function (k) { c[k] = q[k]; });
         c.id = DB.uid(); c.bankId = targetId; c.idx = exist.length + i;
         return c;
       });
-      return Promise.all(copy.map(function (q) { return DB.putQuestion(q); })).then(function () {
-        return refresh();
+      return Promise.all(copy.map(function (q) { return DB.putQuestion(q); }))
+        .then(function () { return copy.length; });
+    });
+  }
+
+  function doMerge(ids, targetId) {
+    var tgt = App.banks.filter(function (b) { return b.id === targetId; })[0];
+    var srcs = App.banks.filter(function (b) { return ids.indexOf(b.id) >= 0 && b.id !== targetId; });
+    if (!tgt || !srcs.length) { App.toast('合并请先勾选至少 2 个题库'); return; }
+    var chain = Promise.resolve(), total = 0, names = [];
+    srcs.forEach(function (s) {
+      chain = chain.then(function () {
+        return mergeOne(s.id, targetId).then(function (n) { if (n) { total += n; names.push(s.name); } });
+      });
+    });
+    chain.then(function () {
+      if (!total) { App.toast('勾选的题库里没有可合并的题目'); return; }
+      return refresh().then(function () {
+        if (!confirm('已将 ' + names.join('、') + ' 的 ' + total + ' 道题并入「' + tgt.name +
+          '」。\n\n是否同时删除来源题库？')) {
+          App.toast('已合并，来源题库保留');
+          return;
+        }
+        var ch = Promise.resolve();
+        srcs.forEach(function (s) { ch = ch.then(function () { return DB.deleteBank(s.id); }); });
+        return ch.then(refresh).then(function () { App.toast('已合并并删除来源题库'); });
       }).then(function () {
-        var del = confirm('已将「' + src.name + '」的 ' + copy.length + ' 道题并入「' + tgt.name +
-          '」。\n\n是否同时删除来源题库「' + src.name + '」？');
-        if (!del) { App.toast('已合并，来源题库保留'); renderBanks(); renderManage(); return; }
-        return DB.deleteBank(srcId).then(refresh).then(function () {
-          App.sel.homeBank = App.banks.filter(function (b) { return b.id === targetId; }).length ? targetId
-            : (App.banks.length ? App.banks[0].id : null);
-          App.toast('已合并并删除来源题库');
-          renderBanks(); renderManage();
-        });
+        App.sel.homeBank = App.banks.filter(function (b) { return b.id === targetId; }).length ? targetId
+          : (App.banks.length ? App.banks[0].id : null);
+        App.mgSel = {};
+        renderBanks(); renderManage();
       });
     });
   }
@@ -1532,6 +1614,9 @@
     $('btn-home-detail').onclick = function () { openBank(App.sel.homeBank); };
     $('btn-home-manage').onclick = openBankManager;
     $('btn-mg-import').onclick = function () { App.go('page-import'); };
+    $('btn-mg-merge').onclick = function () { pickMergeTarget(mgSelIds()); };
+    $('btn-mg-del').onclick = function () { confirmDeleteBank(mgSelIds()); };
+    $('btn-mg-rename').onclick = function () { renameBank(mgSelIds()); };
     $('sc-fav').onclick = gotoFav;
 
     // 题库详情

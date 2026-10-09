@@ -135,11 +135,14 @@
     <header class="nav"><button class="nav-back" data-back><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4.5 7.5 12l7.5 7.5"/></svg></button><h1 class="nav-t">题库管理</h1><span></span></header>
     <div class="scroll">
       <div class="lg-title">题库管理</div>
-      <p class="hint mg-hint">按住右侧 <b>⠿</b> 拖动可调整顺序（排序会影响题库下拉框的排列）。</p>
+      <p class="hint mg-hint">点按任一行可勾选（可多选），按住右侧 <b>⠿</b> 拖动调整顺序（排序会影响题库下拉框的排列）。</p>
       <div id="mg-list" class="mg-list"></div>
-      <div class="block" style="margin-top:14px">
-        <button class="btn primary big" id="btn-mg-import">
-          <svg class="ico" viewBox="0 0 24 24"><path d="M12 4v11"/><path d="M7.6 10.4 12 14.8l4.4-4.4"/><path d="M5 18.5h14"/></svg>导入题库</button>
+      <div id="mg-sel-n" class="mg-sel-n">未选择题库</div>
+      <div class="mg-acts">
+        <button class="mg-btn" id="btn-mg-merge">合并</button>
+        <button class="mg-btn del" id="btn-mg-del">删除</button>
+        <button class="mg-btn" id="btn-mg-rename">重命名</button>
+        <button class="mg-btn primary" id="btn-mg-import">导入题库</button>
       </div>
       <div id="mg-empty" class="empty" hidden>
         <p>还没有题库</p>
