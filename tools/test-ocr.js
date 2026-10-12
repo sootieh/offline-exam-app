@@ -70,7 +70,7 @@ const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 ok('shot-file 为相机拍照输入', /id="shot-file"[^>]*capture="camera"/.test(html));
 ok('引入 js/ocr.js 且在 app.js 之前',
   html.indexOf('js/ocr.js') > 0 && html.indexOf('js/ocr.js') < html.indexOf('js/app.js'));
-ok('版本号更新为 1.15.0', html.includes('版本号 1.15.0'));
+ok('版本号更新为 1.16.0', html.includes('版本号 1.16.0'));
 ok('设置页有拍照搜题区块', html.includes('拍照搜题'));
 
 console.log('\n[5] app.js 逻辑');
@@ -118,6 +118,23 @@ ok('行内旧按钮已移除', !app.includes('data-act="merge">合并') && !app.
 ok('进入管理页清空勾选', app.includes("if (id === 'page-manage') { App.mgSel = {};"));
 ['.mg-check', '.mg-acts', '.mg-btn', '.mg-sel-n', '.mg-row.on']
   .forEach(c => ok('样式 ' + c, css.includes(c)));
+
+console.log('\n[10] 界面与性能优化');
+const blurCount = (css.match(/(?<!-webkit-)backdrop-filter:/g) || []).length;
+ok('玻璃效果收敛到浮层（≤9 处）', blurCount <= 9, '实际 ' + blurCount + ' 处');
+ok('题目列表不再叠玻璃', !/\.qitem\{[^}]*backdrop-filter/.test(css));
+ok('题库卡片不再叠玻璃', !/\.bank-card\{[^}]*backdrop-filter/.test(css));
+ok('答题选项不再叠玻璃', !/\.opt\{[^}]*backdrop-filter/.test(css));
+ok('列表改用实心表面', /\.qitem\{[^}]*background:var\(--surface\)/.test(css));
+ok('保留导航栏玻璃', /\.nav::before\{[^}]*backdrop-filter/.test(css));
+ok('保留 Tab Bar 玻璃', /\.tabbar\{[^}]*backdrop-filter/.test(css));
+ok('定义了 --surface / --hair-l', css.includes('--surface:#ffffff') && css.includes('--hair-l:'));
+ok('更新了现代主色（墨绿 #10685b）', css.includes('--brand:#10685b'));
+ok('JS 主题色板与 CSS 同步', !/#2e6d5c|#4c7196|#a56a48|#55565e|#756b99/.test(app));
+ok('无残留旧功能色硬编码', !/#3e7d5c|#c25b52|rgba\(46,109,92/.test(css));
+ok('搜索输入做了防抖', app.includes('searchT = setTimeout(renderQlist'));
+ok('题目列表改为事件委托', app.includes('function bindQlistOnce'));
+ok('拖动排序改为缓存测量', app.includes('function measure()') && app.includes('cache[i - 1].top'));
 
 console.log('\n[9] DOM 引用完整性（app.js 取用的 id 必须在 HTML 中存在）');
 const DYNAMIC = ['toast-act', 'btn-demo', 'exam-total'];   // 运行时动态插入的元素

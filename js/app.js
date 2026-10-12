@@ -78,11 +78,11 @@
 
   /* ================= 界面风格 ================= */
   var THEMES = [
-    { key: 'moss',      name: '墨绿', brand: '#2e6d5c', bg: '#f6f5f1', darkBrand: '#5fa38e', darkBg: '#111210' },
-    { key: 'mist',      name: '雾蓝', brand: '#4c7196', bg: '#f4f5f7', darkBrand: '#7899bb', darkBg: '#101214' },
-    { key: 'clay',      name: '陶土', brand: '#a56a48', bg: '#f8f4ef', darkBrand: '#c4885f', darkBg: '#121010' },
-    { key: 'graphite',  name: '石墨', brand: '#55565e', bg: '#f5f5f4', darkBrand: '#9a9ba3', darkBg: '#111112' },
-    { key: 'wisteria',  name: '黛紫', brand: '#756b99', bg: '#f6f4f8', darkBrand: '#a29ac7', darkBg: '#111014' }
+    { key: 'moss',      name: '墨绿', brand: '#10685b', bg: '#eff2f1', darkBrand: '#4fa48d', darkBg: '#0e0f0f' },
+    { key: 'mist',      name: '雾蓝', brand: '#26689f', bg: '#eff3f7', darkBrand: '#6f9ecb', darkBg: '#0e1013' },
+    { key: 'clay',      name: '陶土', brand: '#a3552f', bg: '#f6f2ee', darkBrand: '#c9803f', darkBg: '#100e0d' },
+    { key: 'graphite',  name: '石墨', brand: '#484c54', bg: '#f2f2f2', darkBrand: '#9c9da5', darkBg: '#0f0f10' },
+    { key: 'wisteria',  name: '黛紫', brand: '#5f56a0', bg: '#f3f2f7', darkBrand: '#a79dd2', darkBg: '#0f0e12' }
   ];
   function currentTheme() {
     var t = document.documentElement.getAttribute('data-theme');
@@ -444,18 +444,27 @@
         (r.fav ? '★' : '☆') + '</button></div>' +
         '<div class="qi-stem">' + esc(q.stem) + '</div></div>';
     }).join('') || '<div class="empty"><p>' + (App.fuzzy && raw ? '没有相似的题目，可修改上方关键词再试' : '没有匹配的题目') + '</p></div>';
-    Array.prototype.forEach.call($('qlist').querySelectorAll('.qitem'), function (c) {
-      c.onclick = function (e) {
-        if (e.target && e.target.getAttribute && e.target.getAttribute('data-act') === 'fav') return;
-        openEdit(c.getAttribute('data-id'));
-      };
-      var fb = c.querySelector('.qi-favbtn');
-      if (fb) fb.onclick = function (e) {
-        if (e.stopPropagation) e.stopPropagation();
-        App.toggleFav(App.curBank, c.getAttribute('data-id')).then(function () {
-          renderQlist();
-        });
-      };
+    bindQlistOnce();
+  }
+
+  /* 题目列表用事件委托：整份列表只挂一个处理器，重渲染时无需逐个绑定 */
+  var qlistBound = false;
+  function bindQlistOnce() {
+    if (qlistBound) return;
+    var box = $('qlist');
+    if (!box) return;
+    qlistBound = true;
+    box.addEventListener('click', function (e) {
+      var t = e.target;
+      if (!t || !t.closest) return;
+      var item = t.closest('.qitem');
+      if (!item) return;
+      var id = item.getAttribute('data-id');
+      if (t.closest('[data-act="fav"]')) {
+        App.toggleFav(App.curBank, id).then(renderQlist);
+        return;
+      }
+      openEdit(id);
     });
   }
   /* ================= 拍照搜题（本地 OCR，全离线） ================= */
@@ -648,24 +657,35 @@
     paintMgActs();
   }
 
-  /* 拖动排序（指针事件，兼容触摸与鼠标） */
+  /* 拖动排序（指针事件，兼容触摸与鼠标）
+     只在按下和每次换位时测量一次布局，pointermove 期间读缓存，避免每帧强制重排 */
   function bindDrag(row, handle) {
-    var moved = false;
+    var moved = false, rows = null, box = null, cache = [];
+    function measure() {
+      rows = Array.prototype.slice.call(box.children);
+      cache = rows.map(function (r) {
+        var b = r.getBoundingClientRect();
+        return { top: b.top, h: b.height };
+      });
+    }
     handle.addEventListener('pointerdown', function (e) {
       if (e.preventDefault) e.preventDefault();
       if (e.stopPropagation) e.stopPropagation();
       moved = false;
+      box = row.parentNode;
+      measure();
       row.classList.add('dragging');
       var onMove = function (ev) {
-        var y = ev.clientY, moved_ = false;
-        var prev = row.previousElementSibling, next = row.nextElementSibling;
-        if (prev) {
-          var pr = prev.getBoundingClientRect();
-          if (y < pr.top + pr.height / 2) { row.parentNode.insertBefore(row, prev); moved = moved_ = true; }
+        var y = ev.clientY, i = rows.indexOf(row);
+        if (i < 0) return;
+        if (i > 0 && y < cache[i - 1].top + cache[i - 1].h / 2) {
+          box.insertBefore(row, rows[i - 1]);
+          moved = true; measure();
+          return;
         }
-        if (!moved_ && next) {
-          var nr = next.getBoundingClientRect();
-          if (y > nr.top + nr.height / 2) { row.parentNode.insertBefore(next, row); moved = true; }
+        if (i < rows.length - 1 && y > cache[i + 1].top + cache[i + 1].h / 2) {
+          box.insertBefore(rows[i + 1], row);
+          moved = true; measure();
         }
       };
       var onUp = function () {
@@ -1620,7 +1640,12 @@
     $('sc-fav').onclick = gotoFav;
 
     // 题库详情
-    $('q-search').oninput = renderQlist;
+    // 输入防抖：连续打字只在停手后渲染一次，避免每个字符都重建整份列表
+    var searchT = null;
+    $('q-search').oninput = function () {
+      clearTimeout(searchT);
+      searchT = setTimeout(renderQlist, 160);
+    };
     $('btn-shot').onclick = function () { $('shot-file').click(); };
     $('shot-file').onchange = function (e) {
       var f = e.target.files && e.target.files[0];
