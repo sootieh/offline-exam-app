@@ -601,6 +601,12 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
 .icon-name{font-size:11px;color:var(--txt2);white-space:nowrap}
 .icon-opt.on .icon-name{color:var(--brand-d);font-weight:600}
 
+/* 应用图标折叠块：与刷题「答案解析」同一套折叠交互，默认收起，
+   点标题才展开 12 款图标与说明文字，避免设置页一进来就是一大片图 */
+.icon-fold{margin-top:0}
+.ans-toggle .fold-thumb{width:24px;height:24px;border-radius:6px;flex:0 0 auto;box-shadow:var(--sh)}
+.fold-body{padding:4px 6px 12px}
+
 /* ---------------- 设置：开关行 ---------------- */
 .set-row{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:var(--hair)}
 .set-row:last-child{border-bottom:none}

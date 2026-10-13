@@ -70,7 +70,7 @@ const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 ok('shot-file 为相机拍照输入', /id="shot-file"[^>]*capture="camera"/.test(html));
 ok('引入 js/ocr.js 且在 app.js 之前',
   html.indexOf('js/ocr.js') > 0 && html.indexOf('js/ocr.js') < html.indexOf('js/app.js'));
-ok('版本号更新为 1.19.0', html.includes('版本号 1.19.0'));
+ok('版本号更新为 1.20.0', html.includes('版本号 1.20.0'));
 ok('设置页有拍照搜题区块', html.includes('拍照搜题'));
 
 console.log('\n[5] app.js 逻辑');
@@ -200,6 +200,19 @@ ok('网格项为 图片 + 名称', app.includes('class="icon-sw"><img src="icons
 ok('CSS 为 4 列网格', /\.icon-grid\{[^}]*grid-template-columns:repeat\(4,1fr\)/.test(css));
 ok('12 款图标全部可选', (app.match(/\{ key: '[a-z]+-[a-z]+',\s+name: '/g) || []).length >= 12);
 ok('选中态有勾选标记', css.includes('.icon-sw.on::after') && css.includes('.icon-opt.on .icon-name'));
+
+console.log('\n[15] 颜色改名 + 应用图标默认折叠');
+ok('界面风格已改名为「颜色」', html.includes('<div class="blk-title">颜色</div>'));
+ok('不再出现「界面风格」标题', !html.includes('>界面风格<'));
+ok('图标块沿用答案解析折叠组件', html.includes('class="ans-block icon-fold"') && html.includes('class="ans-toggle" id="icon-toggle"'));
+ok('图标网格与说明默认折叠', /<div class="fold-body" id="icon-body" hidden>/.test(html));
+ok('折叠头显示当前图标名', html.includes('id="icon-toggle-label"') && app.includes("lb.textContent = '当前：'"));
+ok('折叠头带当前图标缩略图', html.includes('id="icon-toggle-img"') && app.includes("im.src = 'icons/'"));
+ok('JS 有 setIconFold', app.includes('function setIconFold(open)'));
+ok('初始化默认收起', app.includes('setIconFold(false)'));
+ok('每次进入设置页都收起', app.includes("if (id === 'page-settings') setIconFold(false)"));
+ok('折叠体含 12 款网格与说明文字', html.includes('id="icon-grid"') && html.includes('icon-body'));
+ok('CSS 折叠块去掉上边距', css.includes('.icon-fold{margin-top:0}'));
 
 console.log('\n[9] DOM 引用完整性（app.js 取用的 id 必须在 HTML 中存在）');
 const DYNAMIC = ['toast-act', 'btn-demo', 'exam-total'];   // 运行时动态插入的元素

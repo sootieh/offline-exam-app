@@ -239,10 +239,23 @@
   /* 应用图标选择器：4 × 3 图片网格
      这里不用下拉框是因为原生 <select> 的 <option> 里放不了图片，
      只能显示纯文字；要看图就必须用网格。 */
+  /* 折叠块：默认收起 12 款图标，点标题才展开（与刷题答案解析同一套交互） */
+  function setIconFold(open) {
+    var body = $('icon-body'), tg = $('icon-toggle');
+    if (!body || !tg) return;
+    body.hidden = !open;
+    tg.classList.toggle('open', !!open);
+    tg.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
   function markIconGrid() {
     var box = $('icon-grid');
-    if (!box) return;
     var cur = currentIconKey();
+    var v = ICON_VARIANTS.filter(function (x) { return x.key === cur; })[0];
+    var lb = $('icon-toggle-label');
+    if (lb && v) lb.textContent = '当前：' + v.name;
+    var im = $('icon-toggle-img');
+    if (im && v) im.src = 'icons/' + v.key + '/icon-192.png';
+    if (!box) return;
     Array.prototype.forEach.call(box.children, function (c) {
       var on = c.getAttribute('data-icon') === cur;
       c.classList.toggle('on', on);
@@ -317,6 +330,7 @@
     if (id === 'page-wrong') renderWrong();
     if (id === 'page-fav') renderFav();
     if (id === 'page-manage') { App.mgSel = {}; renderManage(); }
+    if (id === 'page-settings') setIconFold(false);   // 每次进设置都默认收起图标网格
     if (id === 'page-exam') renderExam();
     if (id === 'page-stats') renderStats();
   };
@@ -1722,9 +1736,11 @@
     applyAppearance(null, false);
     renderAppearanceRow();
 
-    // 应用图标：恢复上次选择 + 渲染 4×3 网格
+    // 应用图标：恢复上次选择 + 渲染 4×3 网格（默认折叠）
     applyIcon(currentIconKey(), false);
     renderIconGrid();
+    $('icon-toggle').onclick = function () { setIconFold($('icon-body').hidden); };
+    setIconFold(false);
 
     // 答题与翻题偏好开关
     bindSwitch('sw-autoNext', 'autoNext');
