@@ -74,62 +74,65 @@
 [data-theme="graphite"]{--bg:#f2f2f2}
 [data-theme="wisteria"]{--bg:#f3f2f7}
 
-@media (prefers-color-scheme:dark){
-  :root{
-    --bg:#0e0f0f;
-    --bg-tint:#171818;
-    --surface:#1b1d1c;
-    --surface-2:#222423;
-    --card:rgba(38,40,39,.74);
-    --card-2:rgba(50,52,50,.84);
-    --card-solid:#222423;
-    --hair-l:rgba(240,240,236,.08);
-    --sep:rgba(240,240,236,.13);
-    --sep-hard:rgba(240,240,236,.24);
-    --txt:#f4f4f1;
-    --txt2:rgba(244,244,241,.62);
-    --txt3:rgba(244,244,241,.36);
-    --fill:rgba(240,240,236,.09);
-    --fill-2:rgba(240,240,236,.16);
-    --green:#63ad8c;  --green-l:rgba(99,173,140,.18);
-    --red:#dd8b80;    --red-l:rgba(221,139,128,.17);
-    --orange:#d3a765; --orange-l:rgba(211,167,101,.17);
-    --purple:#a99ecb; --purple-l:rgba(169,158,203,.17);
-    --cyan:#84b6cb;   --cyan-l:rgba(132,182,203,.17);
-    --sh:0 1px 2px rgba(0,0,0,.3), 0 6px 18px rgba(0,0,0,.32);
-    --sh-lg:0 2px 6px rgba(0,0,0,.36), 0 16px 40px rgba(0,0,0,.46);
-    --spec:inset 0 .5px 0 rgba(255,255,255,.13);
-    --spec-s:inset 0 .5px 0 rgba(255,255,255,.09);
-  }
-  :root,[data-theme="moss"]{
-    --brand:#4fa48d;  --brand-2:#73bca8;  --brand-d:#7cbca8;
-    --brand-l:rgba(79,164,141,.16); --brand-t:rgba(79,164,141,.38);
-  }
-  [data-theme="mist"]{
-    --brand:#6f9ecb;  --brand-2:#93b8dd;  --brand-d:#85b0d6;
-    --brand-l:rgba(111,158,203,.17);--brand-t:rgba(111,158,203,.38);
-  }
-  [data-theme="clay"]{
-    --brand:#c9803f;  --brand-2:#dba372;  --brand-d:#d2935f;
-    --brand-l:rgba(201,128,63,.17); --brand-t:rgba(201,128,63,.38);
-  }
-  [data-theme="graphite"]{
-    --brand:#9c9da5;  --brand-2:#bbbcc3;  --brand-d:#adafb6;
-    --brand-l:rgba(156,157,165,.17);--brand-t:rgba(156,157,165,.38);
-  }
-  [data-theme="wisteria"]{
-    --brand:#a79dd2;  --brand-2:#c3bbdf;  --brand-d:#b6aedb;
-    --brand-l:rgba(167,157,210,.17);--brand-t:rgba(167,157,210,.38);
-  }
-    [data-theme="mist"]{--bg:#0e1013}
-  [data-theme="clay"]{--bg:#100e0d}
-  [data-theme="graphite"]{--bg:#0f0f10}
-  [data-theme="wisteria"]{--bg:#0f0e12}
+/* ---------------- 深色外观 ----------------
+   由 html[data-mode="dark"] 控制，支持 浅色 / 深色 / 跟随系统 三选一。
+   「跟随系统」时由 JS 把实际生效的模式写进 data-mode，
+   这样一整套深色变量只需定义一次，不必在媒体查询里重复一遍。 */
+:root[data-mode="dark"]{
+  --bg:#0e0f0f;
+  --bg-tint:#171818;
+  --surface:#1b1d1c;
+  --surface-2:#222423;
+  --card:rgba(38,40,39,.74);
+  --card-2:rgba(50,52,50,.84);
+  --card-solid:#222423;
+  --hair-l:rgba(240,240,236,.08);
+  --sep:rgba(240,240,236,.13);
+  --sep-hard:rgba(240,240,236,.24);
+  --txt:#f4f4f1;
+  --txt2:rgba(244,244,241,.62);
+  --txt3:rgba(244,244,241,.36);
+  --fill:rgba(240,240,236,.09);
+  --fill-2:rgba(240,240,236,.16);
+  --green:#63ad8c;  --green-l:rgba(99,173,140,.18);
+  --red:#dd8b80;    --red-l:rgba(221,139,128,.17);
+  --orange:#d3a765; --orange-l:rgba(211,167,101,.17);
+  --purple:#a99ecb; --purple-l:rgba(169,158,203,.17);
+  --cyan:#84b6cb;   --cyan-l:rgba(132,182,203,.17);
+  --sh:0 1px 2px rgba(0,0,0,.3), 0 6px 18px rgba(0,0,0,.32);
+  --sh-lg:0 2px 6px rgba(0,0,0,.36), 0 16px 40px rgba(0,0,0,.46);
+  --spec:inset 0 .5px 0 rgba(255,255,255,.13);
+  --spec-s:inset 0 .5px 0 rgba(255,255,255,.09);
 }
+:root[data-mode="dark"],[data-mode="dark"][data-theme="moss"]{
+  --brand:#4fa48d;  --brand-2:#73bca8;  --brand-d:#7cbca8;
+  --brand-l:rgba(79,164,141,.16); --brand-t:rgba(79,164,141,.38);
+}
+[data-mode="dark"][data-theme="mist"]{
+  --brand:#6f9ecb;  --brand-2:#93b8dd;  --brand-d:#85b0d6;
+  --brand-l:rgba(111,158,203,.17);--brand-t:rgba(111,158,203,.38);
+}
+[data-mode="dark"][data-theme="clay"]{
+  --brand:#c9803f;  --brand-2:#dba372;  --brand-d:#d2935f;
+  --brand-l:rgba(201,128,63,.17); --brand-t:rgba(201,128,63,.38);
+}
+[data-mode="dark"][data-theme="graphite"]{
+  --brand:#9c9da5;  --brand-2:#bbbcc3;  --brand-d:#adafb6;
+  --brand-l:rgba(156,157,165,.17);--brand-t:rgba(156,157,165,.38);
+}
+[data-mode="dark"][data-theme="wisteria"]{
+  --brand:#a79dd2;  --brand-2:#c3bbdf;  --brand-d:#b6aedb;
+  --brand-l:rgba(167,157,210,.17);--brand-t:rgba(167,157,210,.38);
+}
+[data-mode="dark"][data-theme="mist"]{--bg:#0e1013}
+[data-mode="dark"][data-theme="clay"]{--bg:#100e0d}
+[data-mode="dark"][data-theme="graphite"]{--bg:#0f0f10}
+[data-mode="dark"][data-theme="wisteria"]{--bg:#0f0e12}
+
 /* 降低透明度偏好 → 退回实心 */
 @media (prefers-reduced-transparency:reduce){
   :root{--card:#fff;--card-2:#fff;--blur:none;--blur-strong:none}
-  @media (prefers-color-scheme:dark){:root{--card:#1b1d1c;--card-2:#222423}}
+  :root[data-mode="dark"]{--card:#1b1d1c;--card-2:#222423}
 }
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -591,16 +594,6 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
 .switch.on::after{transform:translateX(20px)}
 
 /* ---------------- 应用图标选择器 ---------------- */
-.icon-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 8px;padding:4px 2px 2px}
-.icon-opt{display:flex;flex-direction:column;align-items:center;gap:7px;padding:2px 0}
-.icon-sw{width:52px;height:52px;border-radius:16px;overflow:hidden;position:relative;
-  box-shadow:var(--sh);transition:transform .15s cubic-bezier(.2,.8,.3,1);border:2.5px solid transparent;
-  background:var(--fill)}
-.icon-opt:active .icon-sw{transform:scale(.88)}
-.icon-sw img{width:100%;height:100%;display:block}
-.icon-opt.on .icon-sw{border-color:var(--brand-d)}
-.icon-name{font-size:11.5px;color:var(--txt2)}
-.icon-opt.on .icon-name{color:var(--brand-d);font-weight:600}
 
 /* ---------------- 题库主页（v1.6） ---------------- */
 .resume-card{display:flex;align-items:center;gap:12px;margin:2px 0 16px;padding:14px 14px;
@@ -774,7 +767,6 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
 .t-act{flex:0 0 auto;background:rgba(255,255,255,.22);color:#fff;border:none;border-radius:9px;
   padding:6px 11px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:var(--font)}
 .t-act:active{opacity:.7}
-
 
 /* ---------------- 卡片：实心 + 细描边（替代玻璃，滚动性能关键） ----------------
    名单里的元素会大量重复出现在列表中，全部去掉 backdrop-filter，

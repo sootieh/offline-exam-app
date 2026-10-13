@@ -76,6 +76,43 @@
     } catch (e) {}
   }
 
+  /* ================= 外观（浅色 / 深色 / 跟随系统） =================
+     实际生效的模式写进 html[data-mode]，CSS 只认这个属性；
+     「跟随系统」时用 matchMedia 实时推导，系统切换深浅立即跟随。 */
+  var APPEARANCE_KEY = 'examapp-appearance';
+  var APPEARANCES = [
+    { key: 'system', name: '跟随系统' },
+    { key: 'light', name: '浅色' },
+    { key: 'dark', name: '深色' }
+  ];
+  function currentAppearance() {
+    var a = null;
+    try { a = localStorage.getItem(APPEARANCE_KEY); } catch (e) {}
+    return APPEARANCES.some(function (x) { return x.key === a; }) ? a : 'system';
+  }
+  function systemDark() {
+    return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  }
+  function isDark() {
+    var a = currentAppearance();
+    return a === 'dark' || (a === 'system' && systemDark());
+  }
+  /* 把「浅色 / 深色 / 跟随系统」落到实际模式上 */
+  function applyAppearance(mode, save) {
+    if (mode) {
+      if (!APPEARANCES.some(function (x) { return x.key === mode; })) mode = 'system';
+      if (save) { try { localStorage.setItem(APPEARANCE_KEY, mode); } catch (e) {} }
+    } else {
+      mode = currentAppearance();
+    }
+    document.documentElement.setAttribute('data-mode', isDark() ? 'dark' : 'light');
+    var cs = document.querySelector('meta[name="color-scheme"]');
+    if (cs) cs.setAttribute('content', isDark() ? 'dark' : 'light');
+    var sel = $('appearance-select');
+    if (sel) sel.value = mode;
+    updateThemeColorMeta();
+  }
+
   /* ================= 界面风格 ================= */
   var THEMES = [
     { key: 'moss',      name: '墨绿', brand: '#10685b', bg: '#eff2f1', darkBrand: '#4fa48d', darkBg: '#0e0f0f' },
@@ -97,7 +134,7 @@
     markThemeRow();
   }
   function updateThemeColorMeta() {
-    var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var dark = isDark();
     var t = currentTheme();
     var meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', dark ? t.darkBg : t.bg);
@@ -163,33 +200,23 @@
     var fav = document.querySelector('link[rel="icon"]');
     if (fav) fav.href = 'icons/' + key + '/icon-192.png' + ver;
     if (save) { try { localStorage.setItem(ICON_KEY, key); } catch (e) {} }
-    markIconRow();
+    markIconPicker();
   }
-  function markIconRow() {
-    var row = $('icon-row');
-    if (!row) return;
-    var cur = currentIconKey();
-    Array.prototype.forEach.call(row.children, function (c) {
-      c.classList.toggle('on', c.getAttribute('data-icon') === cur);
-    });
+  function markIconPicker() {
+    var sel = $('icon-picker');
+    if (sel) sel.value = currentIconKey();
   }
-  function renderIconRow() {
-    var row = $('icon-row');
-    if (!row) return;
-    row.innerHTML = ICON_VARIANTS.map(function (v) {
-      return '<button class="icon-opt" data-icon="' + v.key + '" aria-label="' + v.name + '">' +
-        '<span class="icon-sw"><img src="icons/' + v.key + '/icon-192.png" alt=""></span>' +
-        '<span class="icon-name">' + v.name + '</span></button>';
+  function renderIconPicker() {
+    var sel = $('icon-picker');
+    if (!sel) return;
+    sel.innerHTML = ICON_VARIANTS.map(function (v) {
+      return '<option value="' + v.key + '">' + v.name + '</option>';
     }).join('');
-    Array.prototype.forEach.call(row.children, function (c) {
-      c.onclick = function () {
-        var k = c.getAttribute('data-icon');
-        if (k === currentIconKey()) return;
-        applyIcon(k, true);
-        App.toast('已切换，重加主屏幕后生效');
-      };
-    });
-    markIconRow();
+    sel.onchange = function () {
+      applyIcon(sel.value, true);
+      App.toast('已切换，重加主屏幕后生效');
+    };
+    markIconPicker();
   }
 
   var App = {
@@ -1641,9 +1668,18 @@
     } catch (e) { updateThemeColorMeta(); }
     renderThemeRow();
 
-    // 应用图标：恢复上次选择 + 渲染选择器
+    // 外观（浅色 / 深色 / 跟随系统）
+    applyAppearance(null, false);
+    $('appearance-select').onchange = function () {
+      applyAppearance($('appearance-select').value, true);
+      App.toast('已切换为' + (APPEARANCES.filter(function (x) {
+        return x.key === $('appearance-select').value;
+      })[0] || {}).name);
+    };
+
+    // 应用图标：恢复上次选择 + 渲染下拉框
     applyIcon(currentIconKey(), false);
-    renderIconRow();
+    renderIconPicker();
 
     // 答题与翻题偏好开关
     bindSwitch('sw-autoNext', 'autoNext');
@@ -1653,7 +1689,8 @@
     bindEdgeBack();
     if (window.matchMedia) {
       var mq = window.matchMedia('(prefers-color-scheme: dark)');
-      var onScheme = function () { updateThemeColorMeta(); };
+      // 系统深浅变化时：跟随系统要立即跟着变，强制模式不受影响
+      var onScheme = function () { applyAppearance(null, false); };
       if (mq.addEventListener) mq.addEventListener('change', onScheme);
       else if (mq.addListener) mq.addListener(onScheme);
     }

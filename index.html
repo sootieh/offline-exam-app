@@ -15,6 +15,20 @@
 <link rel="manifest" href="manifest.webmanifest?v=140">
 <link rel="apple-touch-icon" href="icons/check-wx/icon-180.png?v=140">
 <link rel="icon" href="icons/check-wx/icon-192.png?v=140">
+<script>
+/* 首屏前定好外观：否则「强制深色」会先闪一下浅色再变暗。
+   data-mode 是实际生效的模式（dark / light），由「浅色 / 深色 / 跟随系统」推导。 */
+(function () {
+  try {
+    var a = localStorage.getItem('examapp-appearance') || 'system';
+    var dark = a === 'dark' || (a !== 'light' &&
+      window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.setAttribute('data-mode', dark ? 'dark' : 'light');
+    var t = localStorage.getItem('examapp-theme');
+    if (t && t !== 'moss') document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {}
+})();
+</script>
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
@@ -398,13 +412,22 @@ D. 管制
     </header>
     <div class="scroll">
       <div class="block">
+        <div class="blk-title">外观</div>
+        <select id="appearance-select" class="input" aria-label="外观">
+          <option value="system">跟随系统</option>
+          <option value="light">浅色</option>
+          <option value="dark">深色</option>
+        </select>
+        <p class="hint">默认跟随系统；也可强制浅色或深色。切换即时生效并自动记住。</p>
+      </div>
+      <div class="block">
         <div class="blk-title">界面风格</div>
         <div class="theme-row" id="theme-row"></div>
-        <p class="hint">跟随系统深色模式；所选风格即时生效并自动记住。</p>
+        <p class="hint">所选风格即时生效并自动记住，浅色与深色两套配色都已适配。</p>
       </div>
       <div class="block">
         <div class="blk-title">应用图标</div>
-        <div class="icon-row" id="icon-row"></div>
+        <select id="icon-picker" class="input" aria-label="应用图标"></select>
         <p class="hint">选择后即时生效。注意：iPhone 主屏幕上已添加的图标不会自动变化，需删除旧图标后重新「添加到主屏幕」才会使用新图标（系统限制）。</p>
       </div>
       <div class="block">
@@ -456,7 +479,7 @@ D. 管制
         <div class="blk-title">关于</div>
         <div class="tip">
           <p>纯本地运行，所有数据存在你的手机浏览器里，不上传任何服务器。</p>
-          <p>版本号 1.17.3 · 离线可用 · 支持深色模式</p>
+          <p>版本号 1.18.0 · 离线可用 · 支持深色模式</p>
         </div>
       </div>
       <div class="pad"></div>

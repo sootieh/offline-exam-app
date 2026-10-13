@@ -70,7 +70,7 @@ const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 ok('shot-file 为相机拍照输入', /id="shot-file"[^>]*capture="camera"/.test(html));
 ok('引入 js/ocr.js 且在 app.js 之前',
   html.indexOf('js/ocr.js') > 0 && html.indexOf('js/ocr.js') < html.indexOf('js/app.js'));
-ok('版本号更新为 1.17.3', html.includes('版本号 1.17.3'));
+ok('版本号更新为 1.18.0', html.includes('版本号 1.18.0'));
 ok('设置页有拍照搜题区块', html.includes('拍照搜题'));
 
 console.log('\n[5] app.js 逻辑');
@@ -169,6 +169,30 @@ ok('文字块分散对齐（text-align-last:justify）', /\.btn\.entry>span\{[^}
 ok('按钮整体居中', /\.btn\.entry\{[^}]*justify-content:center/.test(css));
 ok('相邻入口间距统一 8px', css.includes('.btn.entry+.btn.entry{margin-top:8px}'));
 ok('不再有内联 margin 破坏间距', !/id="btn-goto-stats"[^>]*style=/.test(html));
+
+console.log('\n[13] 外观：浅色 / 深色 / 跟随系统');
+ok('设置页有外观下拉框', /<select id="appearance-select"[^>]*>/.test(html));
+['system', 'light', 'dark'].forEach(v =>
+  ok('外观含选项 ' + v, html.includes('value="' + v + '"')));
+ok('外观中文标签齐全', ['跟随系统', '浅色', '深色'].every(t => html.includes('>' + t + '<')));
+ok('JS 有三档外观定义', app.includes("var APPEARANCES = [") && app.includes("{ key: 'dark', name: '深色' }"));
+ok('isDark() 综合模式与系统偏好', app.includes('function isDark()') && app.includes("a === 'system' && systemDark()"));
+ok('实际模式写入 data-mode', app.includes("setAttribute('data-mode', isDark() ? 'dark' : 'light')"));
+ok('深色变量由 [data-mode="dark"] 驱动', css.includes(':root[data-mode="dark"]{'));
+ok('深色不再写死媒体查询', (css.match(/prefers-color-scheme/g) || []).length === 0);
+ok('各主题深色跟随 data-mode', css.includes('[data-mode="dark"][data-theme="mist"]'));
+ok('首屏内联脚本定好 data-mode（防闪色）', html.includes("setAttribute('data-mode'"));
+ok('系统深浅变化时跟随', app.includes('var onScheme = function () { applyAppearance(null, false); };'));
+ok('同步 color-scheme meta', app.includes('meta[name="color-scheme"]'));
+
+console.log('\n[14] 应用图标改为单选下拉框');
+ok('图标控件是 select#icon-picker', /<select id="icon-picker"[^>]*><\/select>/.test(html));
+ok('已移除图标网格容器', !html.includes('id="icon-row"'));
+ok('JS 改用 renderIconPicker', app.includes('function renderIconPicker()') && !app.includes('renderIconRow'));
+ok('JS 改用 markIconPicker', app.includes('function markIconPicker()') && !app.includes('markIconRow'));
+ok('下拉选项由 ICON_VARIANTS 生成', app.includes("ICON_VARIANTS.map(function (v) {\n      return '<option value=\"'"));
+ok('选择后即时应用', app.includes('sel.onchange = function () {'));
+ok('清理废弃的网格样式', !css.includes('.icon-opt') && !css.includes('.icon-row'));
 
 console.log('\n[9] DOM 引用完整性（app.js 取用的 id 必须在 HTML 中存在）');
 const DYNAMIC = ['toast-act', 'btn-demo', 'exam-total'];   // 运行时动态插入的元素
