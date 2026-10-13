@@ -70,7 +70,7 @@ const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 ok('shot-file 为相机拍照输入', /id="shot-file"[^>]*capture="camera"/.test(html));
 ok('引入 js/ocr.js 且在 app.js 之前',
   html.indexOf('js/ocr.js') > 0 && html.indexOf('js/ocr.js') < html.indexOf('js/app.js'));
-ok('版本号更新为 1.17.2', html.includes('版本号 1.17.2'));
+ok('版本号更新为 1.17.3', html.includes('版本号 1.17.3'));
 ok('设置页有拍照搜题区块', html.includes('拍照搜题'));
 
 console.log('\n[5] app.js 逻辑');
@@ -165,9 +165,8 @@ ok('三者同用 .btn.ghost.big.entry（排版完全一致）',
   (html.match(/class="btn ghost big entry" id="btn-(?:goto-stats|home-detail|home-manage)"/g) || []).length === 3);
 ok('文字包在定宽 span 里', labels.length === 3 && /<span>完整统计<\/span>/.test(html));
 ok('文字块宽度统一为 7 个汉字（7em）', /\.btn\.entry>span\{[^}]*width:7em/.test(css));
-ok('文字块内居中', /\.btn\.entry>span\{[^}]*text-align:center/.test(css));
+ok('文字块分散对齐（text-align-last:justify）', /\.btn\.entry>span\{[^}]*text-align-last:justify/.test(css));
 ok('按钮整体居中', /\.btn\.entry\{[^}]*justify-content:center/.test(css));
-ok('未拉开字间距（保持 1 字宽的自然排版）', !/\.btn\.entry[^}]*letter-spacing/.test(css));
 ok('相邻入口间距统一 8px', css.includes('.btn.entry+.btn.entry{margin-top:8px}'));
 ok('不再有内联 margin 破坏间距', !/id="btn-goto-stats"[^>]*style=/.test(html));
 

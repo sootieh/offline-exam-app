@@ -184,10 +184,10 @@ input,textarea,select{font-family:inherit;font-size:16px;color:inherit}
 .btn.danger{background:var(--card-solid);color:var(--red)}
 .btn.big{padding:15px;font-size:17px}
 /* 首页三个入口（完整统计 / 题目列表与管理 / 题库管理）：
-   文字块统一按 7 个汉字宽度居中——4 字的「完整统计 / 题库管理」补齐到与
-   7 字的「题目列表与管理」相同的占宽，三者左右边界落在同一列，字间距保持不变 */
+   文字块统一 7 个汉字宽并「分散对齐」——4 字的「完整统计 / 题库管理」
+   字间距拉开撑满 7 字宽，与 7 字的「题目列表与管理」两端对齐、左右边界同列 */
 .btn.entry{display:flex;align-items:center;justify-content:center}
-.btn.entry>span{display:inline-block;width:7em;text-align:center}
+.btn.entry>span{display:inline-block;width:7em;text-align:justify;text-align-last:justify}
 .btn.entry+.btn.entry{margin-top:8px}
 .row-btns{display:flex;gap:10px;margin-top:10px}
 .row-btns .btn{flex:1}
