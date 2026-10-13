@@ -81,7 +81,7 @@
           <div class="blk-title">题型进度</div>
           <div id="home-progress"></div>
         </div>
-        <button class="btn ghost big" id="btn-goto-stats" style="margin-bottom:4px">完整统计 →</button>
+        <button class="btn ghost big" id="btn-goto-stats" style="margin-bottom:4px">完整统计</button>
         <button class="btn ghost big" id="btn-home-detail">题目列表与管理</button>
         <button class="btn ghost big" id="btn-home-manage">题库管理</button>
       </div>
@@ -421,7 +421,11 @@ D. 管制
           <div class="sr-txt"><div class="sr-t">左右滑动翻题</div><div class="sr-s">答题界面左滑下一题，右滑上一题</div></div>
           <button class="switch" id="sw-swipeH" aria-label="左右滑动翻题"></button>
         </div>
-        <p class="hint">三个开关即时生效并自动记住。滑动翻题与页面滚动智能共存：内容还能滚动时先滚动，滚到边缘才翻题。</p>
+        <div class="set-row">
+          <div class="sr-txt"><div class="sr-t">左缘右滑返回</div><div class="sr-s">有返回按钮的页面，从屏幕左边缘右滑即可返回</div></div>
+          <button class="switch" id="sw-edgeBack" aria-label="左缘右滑返回"></button>
+        </div>
+        <p class="hint">四个开关即时生效并自动记住。滑动翻题与页面滚动智能共存：内容还能滚动时先滚动，滚到边缘才翻题；左缘右滑只在起始点贴近左边缘时触发，不会与翻题、滚动、拖动排序冲突。</p>
       </div>
       <div class="block">
         <div class="blk-title">拍照搜题</div>
@@ -452,7 +456,7 @@ D. 管制
         <div class="blk-title">关于</div>
         <div class="tip">
           <p>纯本地运行，所有数据存在你的手机浏览器里，不上传任何服务器。</p>
-          <p>版本号 1.16.0 · 离线可用 · 支持深色模式</p>
+          <p>版本号 1.17.0 · 离线可用 · 支持深色模式</p>
         </div>
       </div>
       <div class="pad"></div>
@@ -573,6 +577,10 @@ D. 管制
     <button class="tab" data-tab="page-settings"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.1"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.09a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.09a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></svg>设置</button>
   </nav>
 
+  <!-- 左缘右滑返回：跟随手指的提示箭头 -->
+  <div class="edge-hint" id="edge-hint" aria-hidden="true">
+    <svg viewBox="0 0 24 24"><path d="M15 4.5 7.5 12l7.5 7.5"/></svg>
+  </div>
   <div class="toast" id="toast" hidden></div>
 
   <!-- 拍照搜题：下载模型 / 识别进度 -->

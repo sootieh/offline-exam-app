@@ -70,7 +70,7 @@ const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 ok('shot-file 为相机拍照输入', /id="shot-file"[^>]*capture="camera"/.test(html));
 ok('引入 js/ocr.js 且在 app.js 之前',
   html.indexOf('js/ocr.js') > 0 && html.indexOf('js/ocr.js') < html.indexOf('js/app.js'));
-ok('版本号更新为 1.16.0', html.includes('版本号 1.16.0'));
+ok('版本号更新为 1.17.0', html.includes('版本号 1.17.0'));
 ok('设置页有拍照搜题区块', html.includes('拍照搜题'));
 
 console.log('\n[5] app.js 逻辑');
@@ -88,7 +88,8 @@ const css = fs.readFileSync(path.join(ROOT, 'css/app.css'), 'utf8');
 ['.shot-btn', '.shot-bar', '.ocr-mask', '.ocr-spin', '.ocr-bar', '.qi-sim', '.search-row{']
   .forEach(c => ok('样式 ' + c, css.includes(c)));
 const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
-ok('SW 缓存版本 v29', sw.includes('examapp-v29'));
+const swVer = parseInt((sw.match(/examapp-v(\d+)/) || [0, 0])[1], 10);
+ok('SW 缓存版本已递增（v31+）', swVer >= 31, '当前 v' + swVer);
 ok('SW 预缓存 js/ocr.js', sw.includes("'./js/ocr.js'"));
 ok('SW 对 vendor/ocr 走缓存优先', sw.includes('/\\/vendor\\/ocr\\//'));
 
@@ -135,6 +136,34 @@ ok('无残留旧功能色硬编码', !/#3e7d5c|#c25b52|rgba\(46,109,92/.test(css
 ok('搜索输入做了防抖', app.includes('searchT = setTimeout(renderQlist'));
 ok('题目列表改为事件委托', app.includes('function bindQlistOnce'));
 ok('拖动排序改为缓存测量', app.includes('function measure()') && app.includes('cache[i - 1].top'));
+
+console.log('\n[11] 左缘右滑返回');
+ok('手势绑定函数存在', app.includes('function bindEdgeBack()'));
+ok('初始化时调用绑定', app.includes('bindEdgeBack();'));
+ok('仅在有返回按钮的页面接管', app.includes("pg.querySelector('[data-back]')"));
+ok('起点限制在左边缘', app.includes('var EDGE = 34') && app.includes('t.clientX > EDGE'));
+ok('位移阈值 62px', app.includes('var MIN = 62'));
+ok('偏竖向时让给原生滚动', app.includes('ay > ax * 0.9'));
+ok('浮层打开时不接管手势', app.includes('function overlayed()'));
+ok('接管后吃掉默认行为（不让浏览器抢）', app.includes("if (e.cancelable && e.preventDefault) e.preventDefault();"));
+ok('touchmove 非被动监听', app.includes("'touchmove', onMove, { passive: false }"));
+ok('跟随开关，默认开启', app.includes('edgeBack: true') && app.includes("bindSwitch('sw-edgeBack', 'edgeBack')"));
+ok('提示箭头元素存在', html.includes('id="edge-hint"'));
+ok('提示箭头样式存在', css.includes('.edge-hint{') && css.includes('pointer-events:none'));
+ok('返回有滑入动画', css.includes('.page.pop-in') && css.includes('@keyframes pagePopIn'));
+ok('尊重减少动效偏好', css.includes('prefers-reduced-motion') && css.includes('.page.pop-in{animation:none}'));
+
+console.log('\n[12] 首页三个入口按钮字符对齐');
+const btnRe = /<button class="btn ghost big" id="btn-(?:goto-stats|home-detail|home-manage)"[^>]*>([^<]*)<\/button>/g;
+const labels = [];
+let bm;
+while ((bm = btnRe.exec(html))) labels.push(bm[1]);
+ok('取到 3 个按钮', labels.length === 3, '实际：' + labels.join(' | '));
+ok('完整统计已去掉箭头', labels.indexOf('完整统计') >= 0, '实际：' + labels.join(' | '));
+ok('三个按钮均无箭头符号', labels.every(t => !/[→›>»]/.test(t)), '实际：' + labels.join(' | '));
+ok('三者同为 .btn.ghost.big（排版一致）',
+  (html.match(/class="btn ghost big" id="btn-(?:goto-stats|home-detail|home-manage)"/g) || []).length === 3);
+ok('按钮文本居中对齐', /\.btn\{[^}]*text-align:center/.test(css));
 
 console.log('\n[9] DOM 引用完整性（app.js 取用的 id 必须在 HTML 中存在）');
 const DYNAMIC = ['toast-act', 'btn-demo', 'exam-total'];   // 运行时动态插入的元素

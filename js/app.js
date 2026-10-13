@@ -41,7 +41,7 @@
   /* ================= 应用设置（偏好开关） =================
      存 localStorage，键 examapp-prefs */
   var PREFS_KEY = 'examapp-prefs';
-  var PREF_DEF = { autoNext: true, swipeV: true, swipeH: true };
+  var PREF_DEF = { autoNext: true, swipeV: true, swipeH: true, edgeBack: true };
   function getPrefs() {
     try { return Object.assign({}, PREF_DEF, JSON.parse(localStorage.getItem(PREFS_KEY) || '{}')); }
     catch (e) { return Object.assign({}, PREF_DEF); }
@@ -248,7 +248,14 @@
     App.stack = [];
     var cur = document.querySelector('.page.active');
     if (cur) cur.classList.remove('active');
-    var pg = $(prev); if (pg) pg.classList.add('active');
+    var pg = $(prev); if (pg) {
+      pg.classList.add('active');
+      // 返回时给一层很轻的滑入，手势与点按返回手感一致
+      pg.classList.remove('pop-in');
+      void pg.offsetWidth;                       // 强制重排，保证连续返回时动画能重放
+      pg.classList.add('pop-in');
+      setTimeout(function () { pg.classList.remove('pop-in'); }, 320);
+    }
     $('tabbar').style.display = TABS.indexOf(prev) >= 0 ? 'flex' : 'none';
     document.querySelectorAll('.tab').forEach(function (t) {
       t.classList.toggle('active', t.getAttribute('data-tab') === prev);
@@ -256,6 +263,66 @@
     if (prev === 'page-banks') renderBanks();
     if (prev === 'page-stats') renderStats();
   };
+
+  /* 左缘右滑返回：只在「当前页面有返回按钮」时生效，且起点必须贴近屏幕左边缘。
+     这样既不会和答题页的左右翻题冲突（答题页没有返回按钮），
+     也不会和竖向滚动、题库管理的拖动排序（手柄在右侧）抢手势。 */
+  function bindEdgeBack() {
+    var EDGE = 34;   // 左缘触发区宽度（px）
+    var MIN = 62;    // 触发位移
+    var SLOP = 12;   // 抖动阈值
+    var tracking = false, fired = false, sx = 0, sy = 0;
+    var hint = $('edge-hint');
+
+    function overlayed() {
+      var m = $('menu-mask'), e = $('edit-mask');
+      return (m && !m.hidden) || (e && !e.hidden);
+    }
+    function show(dx) {
+      if (!hint) return;
+      var pr = dx / MIN; if (pr > 1) pr = 1;
+      hint.style.opacity = pr;
+      hint.style.transform = 'translateX(' + (-14 + 22 * pr) + 'px)';
+    }
+    function hide() {
+      if (!hint) return;
+      hint.style.opacity = 0;
+      hint.style.transform = 'translateX(-16px)';
+    }
+
+    function onStart(e) {
+      tracking = false; fired = false;
+      if (!e.touches || e.touches.length !== 1) return;
+      if (!getPref('edgeBack')) return;
+      if (overlayed()) return;
+      var pg = document.querySelector('.page.active');
+      if (!pg || !pg.querySelector('[data-back]')) return;   // 该页没有返回按钮 → 不接管
+      var t = e.touches[0];
+      if (t.clientX > EDGE) return;                          // 不是从左缘开始 → 不接管
+      sx = t.clientX; sy = t.clientY;
+      tracking = true;
+      if (hint) hint.style.top = t.clientY + 'px';
+    }
+    function onMove(e) {
+      if (!tracking || fired || !e.touches || e.touches.length !== 1) return;
+      var t = e.touches[0];
+      var dx = t.clientX - sx, dy = t.clientY - sy;
+      var ax = Math.abs(dx), ay = Math.abs(dy);
+      if (ax < SLOP && ay < SLOP) return;
+      if (ay > ax * 0.9) { tracking = false; hide(); return; }  // 偏竖向 → 让给原生滚动
+      if (dx < 0) { hide(); return; }                           // 向左滑不算返回
+      // 已确认是横向返回手势：吃掉默认行为，避免触发浏览器自带的边缘返回
+      if (e.cancelable && e.preventDefault) e.preventDefault();
+      show(dx);
+      if (dx >= MIN) { fired = true; tracking = false; hide(); App.back(); }
+    }
+    function onEnd() { if (tracking && !fired) hide(); tracking = false; }
+
+    document.addEventListener('touchstart', onStart, { passive: true });
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onEnd, { passive: true });
+    document.addEventListener('touchcancel', onEnd, { passive: true });
+  }
 
   var toastT = null;
   App.toast = function (msg, actLabel, actFn) {
@@ -1582,6 +1649,8 @@
     bindSwitch('sw-autoNext', 'autoNext');
     bindSwitch('sw-swipeV', 'swipeV');
     bindSwitch('sw-swipeH', 'swipeH');
+    bindSwitch('sw-edgeBack', 'edgeBack');
+    bindEdgeBack();
     if (window.matchMedia) {
       var mq = window.matchMedia('(prefers-color-scheme: dark)');
       var onScheme = function () { updateThemeColorMeta(); };

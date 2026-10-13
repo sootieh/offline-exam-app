@@ -775,3 +775,20 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
    只保留真正浮在内容之上的层（导航、Tab Bar、浮层、Toast）使用玻璃。 */
 .qitem,.bank-card,.rsi,.hi,.sc,.chart,.type-stats,.bank-progress,.sample,.tip-block .tip,.qa,.group{
   border:var(--hair-light)}
+
+/* ---------------- 左缘右滑返回 ----------------
+   提示箭头跟随手指从左侧探出，到达阈值即触发返回；
+   页面返回时给一层很轻的滑入，让手势有「页面被推回来」的反馈。 */
+.edge-hint{position:fixed;left:2px;top:50%;width:32px;height:32px;margin-top:-16px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--card-2);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
+  border:var(--hair-light);box-shadow:var(--sh);color:var(--brand);
+  opacity:0;transform:translateX(-16px);pointer-events:none;z-index:120;
+  transition:opacity .12s linear,transform .06s linear}
+.edge-hint svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2.4;
+  stroke-linecap:round;stroke-linejoin:round}
+@keyframes pagePopIn{from{opacity:.55;transform:translateX(-5%)}to{opacity:1;transform:none}}
+.page.pop-in{animation:pagePopIn .26s cubic-bezier(.2,.8,.3,1)}
+@media (prefers-reduced-motion:reduce){
+  .page.pop-in{animation:none}
+}
