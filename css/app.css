@@ -579,6 +579,28 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
 .theme-name{font-size:11.5px;color:var(--txt2)}
 .theme-opt.on .theme-name{color:var(--brand-d);font-weight:600}
 
+/* 外观选择器：与「界面风格」同一套 图标 + 文字 横排，3 项所以限个宽 */
+.ap-row{max-width:330px;margin:0 auto}
+
+/* ---------------- 应用图标选择器（4 × 3 图片网格） ----------------
+   原生 <select> 的 <option> 里塞不进 <img>，下拉框只能显示纯文字，
+   想看到图标长什么样就必须用网格，所以这里是 4 列 × 3 行。 */
+.icon-grid{display:grid;grid-template-columns:repeat(4,1fr);justify-items:center;
+  gap:12px 6px;padding:6px 2px 2px}
+.icon-opt{display:flex;flex-direction:column;align-items:center;gap:5px;padding:2px 0;width:100%}
+.icon-sw{width:54px;max-width:100%;height:54px;border-radius:13px;position:relative;overflow:hidden;
+  box-shadow:var(--sh);border:2.5px solid transparent;
+  transition:transform .15s cubic-bezier(.2,.8,.3,1)}
+.icon-opt:active .icon-sw{transform:scale(.9)}
+.icon-sw img{width:100%;height:100%;display:block;border-radius:10px}
+.icon-opt .icon-sw.on{border-color:var(--brand-d)}
+.icon-sw.on::after{content:"";position:absolute;right:2px;bottom:2px;width:15px;height:15px;
+  border-radius:8px;background:var(--brand-d);
+  background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.6 4.6L19 7.5"/></svg>');
+  background-size:11px;background-position:center;background-repeat:no-repeat}
+.icon-name{font-size:11px;color:var(--txt2);white-space:nowrap}
+.icon-opt.on .icon-name{color:var(--brand-d);font-weight:600}
+
 /* ---------------- 设置：开关行 ---------------- */
 .set-row{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:var(--hair)}
 .set-row:last-child{border-bottom:none}

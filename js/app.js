@@ -80,10 +80,12 @@
      实际生效的模式写进 html[data-mode]，CSS 只认这个属性；
      「跟随系统」时用 matchMedia 实时推导，系统切换深浅立即跟随。 */
   var APPEARANCE_KEY = 'examapp-appearance';
+  /* top / bottom 是选择器里那个双色圆片的上下两截配色：
+     跟随系统 = 上浅下深（一半一半），浅色 = 全浅，深色 = 全深 */
   var APPEARANCES = [
-    { key: 'system', name: '跟随系统' },
-    { key: 'light', name: '浅色' },
-    { key: 'dark', name: '深色' }
+    { key: 'system', name: '跟随系统', top: '#f4f5f4', bottom: '#262829' },
+    { key: 'light',  name: '浅色',     top: '#ffffff', bottom: '#dfe3e2' },
+    { key: 'dark',   name: '深色',     top: '#34373a', bottom: '#181a1a' }
   ];
   function currentAppearance() {
     var a = null;
@@ -108,9 +110,40 @@
     document.documentElement.setAttribute('data-mode', isDark() ? 'dark' : 'light');
     var cs = document.querySelector('meta[name="color-scheme"]');
     if (cs) cs.setAttribute('content', isDark() ? 'dark' : 'light');
-    var sel = $('appearance-select');
-    if (sel) sel.value = mode;
     updateThemeColorMeta();
+    markAppearanceRow();
+  }
+
+  /* 外观选择器：与「界面风格」同一套 图标 + 文字 的横排网格（这里 3 项） */
+  function markAppearanceRow() {
+    var row = $('appearance-row');
+    if (!row) return;
+    var cur = currentAppearance();
+    Array.prototype.forEach.call(row.children, function (c) {
+      var on = c.getAttribute('data-appearance') === cur;
+      c.classList.toggle('on', on);
+      var sw = c.querySelector('.theme-sw');
+      if (sw) sw.classList.toggle('on', on);
+    });
+  }
+  function renderAppearanceRow() {
+    var row = $('appearance-row');
+    if (!row) return;
+    row.innerHTML = APPEARANCES.map(function (a) {
+      return '<button class="theme-opt" data-appearance="' + a.key + '" aria-label="' + a.name + '">' +
+        '<span class="theme-sw"><i style="background:' + a.top + '"></i>' +
+        '<b style="background:' + a.bottom + '"></b></span>' +
+        '<span class="theme-name">' + a.name + '</span></button>';
+    }).join('');
+    Array.prototype.forEach.call(row.children, function (c) {
+      c.onclick = function () {
+        var k = c.getAttribute('data-appearance');
+        applyAppearance(k, true);
+        var a = APPEARANCES.filter(function (x) { return x.key === k; })[0];
+        App.toast('已切换为' + (a ? a.name : ''));
+      };
+    });
+    markAppearanceRow();
   }
 
   /* ================= 界面风格 ================= */
@@ -200,23 +233,40 @@
     var fav = document.querySelector('link[rel="icon"]');
     if (fav) fav.href = 'icons/' + key + '/icon-192.png' + ver;
     if (save) { try { localStorage.setItem(ICON_KEY, key); } catch (e) {} }
-    markIconPicker();
+    markIconGrid();
   }
-  function markIconPicker() {
-    var sel = $('icon-picker');
-    if (sel) sel.value = currentIconKey();
+
+  /* 应用图标选择器：4 × 3 图片网格
+     这里不用下拉框是因为原生 <select> 的 <option> 里放不了图片，
+     只能显示纯文字；要看图就必须用网格。 */
+  function markIconGrid() {
+    var box = $('icon-grid');
+    if (!box) return;
+    var cur = currentIconKey();
+    Array.prototype.forEach.call(box.children, function (c) {
+      var on = c.getAttribute('data-icon') === cur;
+      c.classList.toggle('on', on);
+      var sw = c.querySelector('.icon-sw');
+      if (sw) sw.classList.toggle('on', on);
+    });
   }
-  function renderIconPicker() {
-    var sel = $('icon-picker');
-    if (!sel) return;
-    sel.innerHTML = ICON_VARIANTS.map(function (v) {
-      return '<option value="' + v.key + '">' + v.name + '</option>';
+  function renderIconGrid() {
+    var box = $('icon-grid');
+    if (!box) return;
+    box.innerHTML = ICON_VARIANTS.map(function (v) {
+      return '<button class="icon-opt" data-icon="' + v.key + '" aria-label="' + v.name + '">' +
+        '<span class="icon-sw"><img src="icons/' + v.key + '/icon-192.png" alt=""></span>' +
+        '<span class="icon-name">' + v.name + '</span></button>';
     }).join('');
-    sel.onchange = function () {
-      applyIcon(sel.value, true);
-      App.toast('已切换，重加主屏幕后生效');
-    };
-    markIconPicker();
+    Array.prototype.forEach.call(box.children, function (c) {
+      c.onclick = function () {
+        var k = c.getAttribute('data-icon');
+        if (k === currentIconKey()) return;
+        applyIcon(k, true);
+        App.toast('已切换，重加主屏幕后生效');
+      };
+    });
+    markIconGrid();
   }
 
   var App = {
@@ -1670,16 +1720,11 @@
 
     // 外观（浅色 / 深色 / 跟随系统）
     applyAppearance(null, false);
-    $('appearance-select').onchange = function () {
-      applyAppearance($('appearance-select').value, true);
-      App.toast('已切换为' + (APPEARANCES.filter(function (x) {
-        return x.key === $('appearance-select').value;
-      })[0] || {}).name);
-    };
+    renderAppearanceRow();
 
-    // 应用图标：恢复上次选择 + 渲染下拉框
+    // 应用图标：恢复上次选择 + 渲染 4×3 网格
     applyIcon(currentIconKey(), false);
-    renderIconPicker();
+    renderIconGrid();
 
     // 答题与翻题偏好开关
     bindSwitch('sw-autoNext', 'autoNext');
