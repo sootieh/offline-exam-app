@@ -70,7 +70,7 @@ const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 ok('shot-file 为相机拍照输入', /id="shot-file"[^>]*capture="camera"/.test(html));
 ok('引入 js/ocr.js 且在 app.js 之前',
   html.indexOf('js/ocr.js') > 0 && html.indexOf('js/ocr.js') < html.indexOf('js/app.js'));
-ok('版本号更新为 1.17.0', html.includes('版本号 1.17.0'));
+ok('版本号更新为 1.17.1', html.includes('版本号 1.17.1'));
 ok('设置页有拍照搜题区块', html.includes('拍照搜题'));
 
 console.log('\n[5] app.js 逻辑');
@@ -154,16 +154,19 @@ ok('返回有滑入动画', css.includes('.page.pop-in') && css.includes('@keyfr
 ok('尊重减少动效偏好', css.includes('prefers-reduced-motion') && css.includes('.page.pop-in{animation:none}'));
 
 console.log('\n[12] 首页三个入口按钮字符对齐');
-const btnRe = /<button class="btn ghost big" id="btn-(?:goto-stats|home-detail|home-manage)"[^>]*>([^<]*)<\/button>/g;
+const btnRe = /<button class="btn ghost big entry" id="btn-(?:goto-stats|home-detail|home-manage)"[^>]*>([^<]*)<\/button>/g;
 const labels = [];
 let bm;
 while ((bm = btnRe.exec(html))) labels.push(bm[1]);
 ok('取到 3 个按钮', labels.length === 3, '实际：' + labels.join(' | '));
 ok('完整统计已去掉箭头', labels.indexOf('完整统计') >= 0, '实际：' + labels.join(' | '));
 ok('三个按钮均无箭头符号', labels.every(t => !/[→›>»]/.test(t)), '实际：' + labels.join(' | '));
-ok('三者同为 .btn.ghost.big（排版一致）',
-  (html.match(/class="btn ghost big" id="btn-(?:goto-stats|home-detail|home-manage)"/g) || []).length === 3);
-ok('按钮文本居中对齐', /\.btn\{[^}]*text-align:center/.test(css));
+ok('三者同用 .btn.ghost.big.entry（排版完全一致）',
+  (html.match(/class="btn ghost big entry" id="btn-(?:goto-stats|home-detail|home-manage)"/g) || []).length === 3);
+ok('入口文字左对齐（首字排成一列）', /\.btn\.entry\{[^}]*text-align:left/.test(css));
+ok('入口左内边距统一', /\.btn\.entry\{[^}]*padding-left:20px/.test(css));
+ok('相邻入口间距统一 8px', css.includes('.btn.entry+.btn.entry{margin-top:8px}'));
+ok('不再有内联 margin 破坏间距', !/id="btn-goto-stats"[^>]*style=/.test(html));
 
 console.log('\n[9] DOM 引用完整性（app.js 取用的 id 必须在 HTML 中存在）');
 const DYNAMIC = ['toast-act', 'btn-demo', 'exam-total'];   // 运行时动态插入的元素
